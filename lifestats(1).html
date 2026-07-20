@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LifeStats</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0B1220;
+    --panel:#121B2E;
+    --panel-line:#243250;
+    --text:#E8ECF3;
+    --muted:#7C8AA5;
+    --vitality:#5CD68A;
+    --vitality-dim:#1F3A2C;
+    --social:#4CC2E8;
+    --social-dim:#1B3644;
+    --career:#F0A93C;
+    --career-dim:#3A2E17;
+    --xp:#B98BE0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    padding:32px 24px 60px;
+  }
+  .wrap{max-width:880px;margin:0 auto;}
+
+  /* Header */
+  .header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    margin-bottom:8px;
+  }
+  .name-block .eyebrow{
+    font-family:'Rajdhani',sans-serif;
+    font-size:12px;
+    letter-spacing:3px;
+    color:var(--muted);
+    text-transform:uppercase;
+  }
+  .name-block h1{
+    font-family:'Rajdhani',sans-serif;
+    font-weight:700;
+    font-size:34px;
+    margin:2px 0 0;
+    letter-spacing:0.5px;
+  }
+  .level-badge{
+    font-family:'Rajdhani',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    padding:8px 16px;
+    border-radius:3px;
+    color:var(--xp);
+  }
+  .level-badge span{color:var(--muted);font-weight:500;margin-left:6px;font-size:12px;}
+
+  /* XP bar */
+  .xp-row{margin-bottom:36px;}
+  .xp-track{
+    height:8px;
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:4px;
+    overflow:hidden;
+    margin-top:8px;
+  }
+  .xp-fill{
+    height:100%;
+    background:linear-gradient(90deg, #7C5CD6, var(--xp));
+    width:62%;
+    transition:width .5s ease;
+  }
+  .xp-caption{
+    display:flex;
+    justify-content:space-between;
+    font-size:11px;
+    color:var(--muted);
+    margin-top:6px;
+    font-family:'Rajdhani',sans-serif;
+    letter-spacing:1px;
+  }
+
+  /* Layout: radar + stat cards */
+  .core{
+    display:grid;
+    grid-template-columns:260px 1fr;
+    gap:28px;
+    margin-bottom:32px;
+  }
+  @media (max-width:640px){ .core{grid-template-columns:1fr;} }
+
+  .radar-panel{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:4px;
+    padding:18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .stats{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .stat-card{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-left:3px solid var(--c);
+    border-radius:3px;
+    padding:14px 16px;
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:6px 12px;
+    align-items:center;
+  }
+  .stat-name{
+    font-family:'Rajdhani',sans-serif;
+    font-weight:600;
+    font-size:16px;
+    letter-spacing:0.5px;
+  }
+  .stat-name small{
+    display:block;
+    font-family:'Inter',sans-serif;
+    font-weight:400;
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:0;
+    margin-top:2px;
+  }
+  .stat-val{
+    font-family:'Rajdhani',sans-serif;
+    font-weight:700;
+    font-size:20px;
+    color:var(--c);
+    text-align:right;
+  }
+  .stat-track{
+    grid-column:1/3;
+    height:6px;
+    background:var(--ink);
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .stat-fill{
+    height:100%;
+    background:var(--c);
+    transition:width .4s ease;
+  }
+  .stat-btn{
+    grid-column:1/3;
+    justify-self:end;
+    background:none;
+    border:1px solid var(--panel-line);
+    color:var(--muted);
+    font-family:'Rajdhani',sans-serif;
+    font-size:11px;
+    letter-spacing:1px;
+    padding:4px 10px;
+    border-radius:3px;
+    cursor:pointer;
+  }
+  .stat-btn:hover{color:var(--c);border-color:var(--c);}
+
+  /* Quest log */
+  .section-title{
+    font-family:'Rajdhani',sans-serif;
+    font-size:13px;
+    letter-spacing:2px;
+    color:var(--muted);
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  .quests{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:4px;
+  }
+  .quest{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px 16px;
+    border-bottom:1px solid var(--panel-line);
+    font-size:14px;
+  }
+  .quest:last-child{border-bottom:none;}
+  .quest input{accent-color:var(--vitality);width:16px;height:16px;}
+  .quest .tag{
+    font-family:'Rajdhani',sans-serif;
+    font-size:10px;
+    letter-spacing:1px;
+    padding:2px 8px;
+    border-radius:2px;
+    text-transform:uppercase;
+    margin-left:auto;
+  }
+  .tag.vitality{background:var(--vitality-dim);color:var(--vitality);}
+  .tag.social{background:var(--social-dim);color:var(--social);}
+  .tag.career{background:var(--career-dim);color:var(--career);}
+  .quest.done label{color:var(--muted);text-decoration:line-through;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="name-block">
+      <div class="eyebrow">Character Sheet</div>
+      <h1>Adventurer</h1>
+    </div>
+    <div class="level-badge">LVL 14<span>REAL LIFE</span></div>
+  </div>
+
+  <div class="xp-row">
+    <div class="xp-track"><div class="xp-fill" id="xpFill"></div></div>
+    <div class="xp-caption"><span id="xpLabel">1,240 / 2,000 XP</span><span>760 to next level</span></div>
+  </div>
+
+  <div class="core">
+    <div class="radar-panel">
+      <svg viewBox="0 0 220 220" width="220" height="220">
+        <polygon points="110,20 190,110 110,200 30,110" fill="none" stroke="#243250" stroke-width="1"/>
+        <polygon points="110,55 165,110 110,165 55,110" fill="none" stroke="#243250" stroke-width="1"/>
+        <line x1="110" y1="20" x2="110" y2="200" stroke="#243250" stroke-width="1"/>
+        <line x1="30" y1="110" x2="190" y2="110" stroke="#243250" stroke-width="1"/>
+        <polygon id="radarShape" points="110,45 175,110 110,150 65,120" fill="rgba(124,92,214,0.25)" stroke="#B98BE0" stroke-width="2"/>
+        <text x="110" y="12" text-anchor="middle" fill="#5CD68A" font-family="Rajdhani" font-size="11" font-weight="600">VITALITY</text>
+        <text x="200" y="114" text-anchor="start" fill="#4CC2E8" font-family="Rajdhani" font-size="11" font-weight="600">SOCIAL</text>
+        <text x="110" y="214" text-anchor="middle" fill="#F0A93C" font-family="Rajdhani" font-size="11" font-weight="600">CAREER</text>
+        <text x="20" y="114" text-anchor="end" fill="#7C8AA5" font-family="Rajdhani" font-size="11" font-weight="600">MIND</text>
+      </svg>
+    </div>
+
+    <div class="stats" id="statList"></div>
+  </div>
+
+  <div class="section-title">Active Quests</div>
+  <div class="quests" id="questList"></div>
+
+</div>
+
+<script>
+const stats = [
+  { key:'vitality', name:'Vitality', desc:'Sleep, movement, food', value:68, color:'var(--vitality)' },
+  { key:'social', name:'Social', desc:'Friends, connection, dating', value:41, color:'var(--social)' },
+  { key:'career', name:'Career', desc:'Work, skills, money', value:77, color:'var(--career)' },
+];
+
+const questData = [
+  { text:'Get 8 hours of sleep', tag:'vitality', done:true },
+  { text:'Text a friend you haven\\'t talked to in a while', tag:'social', done:false },
+  { text:'Finish one deep-work block', tag:'career', done:false },
+  { text:'Go for a 20 min walk', tag:'vitality', done:false },
+];
+
+function renderStats(){
+  const el = document.getElementById('statList');
+  el.innerHTML = stats.map(s => `
+    <div class="stat-card" style="--c:${s.color}">
+      <div class="stat-name">${s.name}<small>${s.desc}</small></div>
+      <div class="stat-val">${s.value}</div>
+      <div class="stat-track"><div class="stat-fill" style="width:${s.value}%"></div></div>
+      <button class="stat-btn" onclick="bump('${s.key}')">+ LOG ACTIVITY</button>
+    </div>
+  `).join('');
+}
+
+function renderQuests(){
+  const el = document.getElementById('questList');
+  el.innerHTML = questData.map((q,i) => `
+    <div class="quest ${q.done?'done':''}">
+      <input type="checkbox" ${q.done?'checked':''} onchange="toggleQuest(${i})">
+      <label>${q.text}</label>
+      <span class="tag ${q.tag}">${q.tag}</span>
+    </div>
+  `).join('');
+}
+
+function bump(key){
+  const s = stats.find(x=>x.key===key);
+  s.value = Math.min(100, s.value + 4);
+  renderStats();
+}
+
+function toggleQuest(i){
+  questData[i].done = !questData[i].done;
+  renderQuests();
+}
+
+renderStats();
+renderQuests();
+</script>
+</body>
+</html>
