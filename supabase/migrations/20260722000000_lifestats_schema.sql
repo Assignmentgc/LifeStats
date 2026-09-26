@@ -3,11 +3,16 @@
 -- Daily quest days are evaluated in UTC. Call public.reset_daily_quests()
 -- after an authenticated app load, before reading the quest list. The
 -- complete_quest RPC also performs this reset as part of its transaction.
---random comment for no reason
---another random comment for no reason
 begin;
 
-create type public.stat_tag as enum ('vitality', 'social', 'career', 'mind');
+create type public.stat_tag as enum (
+  'vitality',
+  'strength',
+  'intellect',
+  'discipline',
+  'social',
+  'purpose'
+);
 
 create table public.stats (
   user_id uuid not null references auth.users (id) on delete cascade,
@@ -95,7 +100,7 @@ create trigger set_quests_updated_at
 before update on public.quests
 for each row execute procedure public.set_updated_at();
 
--- Every newly-created Auth user begins with all four stats at zero.
+-- Every newly-created Auth user begins with all six stats at zero.
 create or replace function public.seed_stats_for_new_user()
 returns trigger
 language plpgsql
@@ -106,9 +111,11 @@ begin
   insert into public.stats (user_id, stat_name, value)
   values
     (new.id, 'vitality'::public.stat_tag, 0),
+    (new.id, 'strength'::public.stat_tag, 0),
+    (new.id, 'intellect'::public.stat_tag, 0),
+    (new.id, 'discipline'::public.stat_tag, 0),
     (new.id, 'social'::public.stat_tag, 0),
-    (new.id, 'career'::public.stat_tag, 0),
-    (new.id, 'mind'::public.stat_tag, 0)
+    (new.id, 'purpose'::public.stat_tag, 0)
   on conflict (user_id, stat_name) do nothing;
 
   return new;
@@ -126,9 +133,11 @@ from auth.users as auth_user
 cross join (
   values
     ('vitality'::public.stat_tag),
+    ('strength'::public.stat_tag),
+    ('intellect'::public.stat_tag),
+    ('discipline'::public.stat_tag),
     ('social'::public.stat_tag),
-    ('career'::public.stat_tag),
-    ('mind'::public.stat_tag)
+    ('purpose'::public.stat_tag)
 ) as stat(stat_name)
 on conflict (user_id, stat_name) do nothing;
 

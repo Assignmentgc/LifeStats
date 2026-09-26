@@ -1,8 +1,16 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
-import { ProgressBar } from "./progress-bar";
 import { STAT_LABELS, type StatTone } from "./types";
 import { cn } from "./utils";
+
+const statIcons: Record<StatTone, string> = {
+  vitality: "ϟ",
+  strength: "♟",
+  intellect: "✦",
+  discipline: "♨",
+  social: "⌁",
+  purpose: "◎",
+};
 
 type StatCardProps = {
   tone: StatTone;
@@ -26,14 +34,16 @@ export function StatCard({
 
   return (
     <div className={cn("stat-card", className)} data-tone={tone}>
-      <div>
-        <div className="stat-card__name">{label}</div>
-        {description ? <div className="stat-card__description">{description}</div> : null}
+      <div
+        className="stat-card__gauge"
+        style={{ "--stat-progress": `${safeValue}%` } as CSSProperties}
+        aria-hidden="true"
+      >
+        <span className="stat-card__gauge-inner">{statIcons[tone]}</span>
       </div>
+      <div className="stat-card__name">{label}</div>
       <div className="stat-card__value">{safeValue}</div>
-      <div className="stat-card__progress">
-        <ProgressBar value={safeValue} tone={tone} size="sm" />
-      </div>
+      {description ? <div className="stat-card__description">{description}</div> : null}
       {footer ? <div className="stat-card__footer">{footer}</div> : null}
     </div>
   );

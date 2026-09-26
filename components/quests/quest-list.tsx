@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Trash2 } from "lucide-react";
+import { ChevronRight, Trash2 } from "lucide-react";
 import { completeQuest, deleteQuest } from "@/app/actions/quests";
 import { Button, EmptyState, Panel, StatTag } from "@/components/ui";
 import type { Quest } from "@/lib/types";
@@ -11,6 +11,7 @@ type QuestListProps = {
   allowDelete?: boolean;
   emptyTitle?: string;
   emptyDescription?: string;
+  variant?: "standard" | "daily";
 };
 
 export function QuestList({
@@ -18,6 +19,7 @@ export function QuestList({
   allowDelete = false,
   emptyTitle = "No quests yet",
   emptyDescription = "Add a small, specific quest and turn your next action into XP.",
+  variant = "standard",
 }: QuestListProps) {
   const [isPending, startTransition] = useTransition();
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -53,6 +55,23 @@ export function QuestList({
       <Panel className="quest-list" padded={false}>
         {quests.map((quest) => {
           const pending = isPending && pendingId === quest.id;
+          if (variant === "daily") {
+            return (
+              <button
+                aria-label={quest.is_completed ? `${quest.title} completed` : `Complete ${quest.title}`}
+                className={`quest-item quest-item--daily ${quest.is_completed ? "quest-item--complete" : ""}`}
+                disabled={quest.is_completed || pending}
+                key={quest.id}
+                onClick={() => markComplete(quest.id)}
+                type="button"
+              >
+                <span className="quest-item__xp-chip">+{quest.xp_value}</span>
+                <span className="quest-item__title">{quest.title}</span>
+                <ChevronRight aria-hidden="true" className="quest-item__chevron" size={18} />
+              </button>
+            );
+          }
+
           return (
             <div
               className={`quest-item ${quest.is_completed ? "quest-item--complete" : ""}`}

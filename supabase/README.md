@@ -1,8 +1,9 @@
 # LifeStats Supabase setup
 
-Run the SQL migration in `migrations/20260722000000_lifestats_schema.sql` in
-the Supabase SQL Editor, or apply it through the Supabase CLI with
-`supabase db push` after linking the project.
+Apply every SQL migration in timestamp order. For a linked project, use
+`supabase db push`; in the SQL Editor, run the initial schema first and then
+the character-stat upgrade migration. The upgrade is required for projects
+that were created with the original four-stat schema.
 
 The application should call these authenticated RPCs:
 

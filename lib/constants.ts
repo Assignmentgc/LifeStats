@@ -1,27 +1,39 @@
 export const STAT_META = {
   vitality: {
     label: "Vitality",
-    description: "Sleep, movement, food",
+    description: "Energy, health, and recovery",
     color: "#5CD68A",
     dimColor: "#1F3A2C",
+  },
+  strength: {
+    label: "Strength",
+    description: "Movement, training, and resilience",
+    color: "#EF6262",
+    dimColor: "#412329",
+  },
+  intellect: {
+    label: "Intellect",
+    description: "Learning, focus, and clear thinking",
+    color: "#4D8DF7",
+    dimColor: "#1E3155",
+  },
+  discipline: {
+    label: "Discipline",
+    description: "Consistency, routines, and follow-through",
+    color: "#F39A36",
+    dimColor: "#432D18",
   },
   social: {
     label: "Social",
     description: "Friends, connection, dating",
-    color: "#4CC2E8",
-    dimColor: "#1B3644",
+    color: "#E04DA8",
+    dimColor: "#45233C",
   },
-  career: {
-    label: "Career",
-    description: "Work, skills, money",
-    color: "#F0A93C",
-    dimColor: "#3A2E17",
-  },
-  mind: {
-    label: "Mind",
-    description: "Learning, reflection, calm",
-    color: "#B98BE0",
-    dimColor: "#302345",
+  purpose: {
+    label: "Purpose",
+    description: "Goals, meaning, and direction",
+    color: "#9162DC",
+    dimColor: "#30234A",
   },
 } as const;
 

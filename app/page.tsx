@@ -1,9 +1,12 @@
 import { redirect } from "next/navigation";
+import { hasSupabaseConfig } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  if (!hasSupabaseConfig()) redirect("/setup");
+
   const supabase = await createClient();
   const {
     data: { user },

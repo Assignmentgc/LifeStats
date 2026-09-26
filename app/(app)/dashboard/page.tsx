@@ -1,10 +1,8 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { Flame, Settings, Sparkles } from "lucide-react";
 import { QuestList } from "@/components/quests/quest-list";
 import {
-  CharacterRadar,
   LevelBadge,
-  Panel,
   ProgressBar,
   SectionHeading,
   StatCard,
@@ -15,44 +13,68 @@ import { formatNumber } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const { user, stats, quests, progress } = await getDashboardData();
-  const statsByName = Object.fromEntries(stats.map((stat) => [stat.stat_name, stat.value]));
-  const displayName = user.email?.split("@")[0] || "Adventurer";
+  const displayName = (user.email?.split("@")[0] || "Adventurer")
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+  const completedToday = quests.filter((quest) => quest.is_daily && quest.is_completed).length;
+  const dailyQuests = quests.filter((quest) => quest.is_daily && !quest.is_completed);
+  const questPreview = (dailyQuests.length ? dailyQuests : quests.filter((quest) => !quest.is_completed)).slice(0, 3);
 
   return (
-    <main className="page-container">
-      <header className="sheet-header">
+    <main className="page-container dashboard-page">
+      <header className="dashboard-welcome">
         <div>
-          <p className="eyebrow">Character sheet</p>
+          <p className="eyebrow">Welcome back</p>
           <h1 className="sheet-title">{displayName}</h1>
         </div>
-        <LevelBadge level={progress.level} />
+        <Link className="dashboard-settings" href="/stats" aria-label="View character stats">
+          <Settings aria-hidden="true" size={18} />
+        </Link>
       </header>
 
-      <section className="xp-section" aria-label="Experience progress">
-        <ProgressBar
-          label="Experience"
-          showValue
-          size="lg"
-          value={progress.progressPercent}
-          valueLabel={`${formatNumber(progress.xpIntoLevel)} / ${formatNumber(progress.xpForLevel)} XP`}
-        />
-        <p>{formatNumber(progress.totalXp)} total XP · {formatNumber(progress.xpToNextLevel)} to level {progress.level + 1}</p>
+      <section className="character-card" aria-label="Your character">
+        <div className="character-avatar" aria-hidden="true">
+          <span className="character-avatar__head" />
+          <span className="character-avatar__body" />
+        </div>
+        <div className="character-card__content">
+          <h2>Your Character</h2>
+          <p>Build the life you want, one quest at a time.</p>
+          <Link className="character-customize" href="/stats">
+            <Sparkles aria-hidden="true" size={15} /> Customize
+          </Link>
+        </div>
       </section>
 
-      <section className="dashboard-grid" aria-label="Character statistics">
-        <Panel className="radar-panel">
-          <p className="eyebrow">Balance of power</p>
-          <CharacterRadar
-            stats={{
-              vitality: Number(statsByName.vitality ?? 0),
-              social: Number(statsByName.social ?? 0),
-              career: Number(statsByName.career ?? 0),
-              mind: Number(statsByName.mind ?? 0),
-            }}
-          />
-          <p className="radar-panel__caption">Your quests build the shape.</p>
-        </Panel>
-        <div className="stats-list">
+      <section className="xp-section level-card" aria-label="Experience progress">
+        <div className="level-card__summary">
+          <LevelBadge level={progress.level} caption="Level" />
+          <div>
+            <p>Level {progress.level}</p>
+            <strong>{formatNumber(progress.totalXp)} Total XP</strong>
+          </div>
+          <span className="level-card__streak">
+            <Flame aria-hidden="true" size={17} />
+            <strong>{completedToday}</strong> today
+          </span>
+        </div>
+        <ProgressBar
+          label="XP"
+          showValue
+          size="sm"
+          value={progress.progressPercent}
+          valueLabel={`${formatNumber(progress.xpIntoLevel)} / ${formatNumber(progress.xpForLevel)}`}
+        />
+      </section>
+
+      <section id="stats" aria-label="Character statistics">
+        <SectionHeading
+          title="Character Stats"
+          action={<Link className="section-link" href="/stats">View all ›</Link>}
+        />
+        <div className="stats-list dashboard-stats">
           {STAT_NAMES.map((name) => {
             const stat = stats.find((item) => item.stat_name === name);
             return (
@@ -60,11 +82,6 @@ export default async function DashboardPage() {
                 key={name}
                 tone={name}
                 value={stat?.value ?? 0}
-                description={
-                  name === "vitality" ? "Sleep, movement, food" :
-                  name === "social" ? "Friends, connection, dating" :
-                  name === "career" ? "Work, skills, money" : "Learning, reflection, calm"
-                }
               />
             );
           })}
@@ -72,18 +89,14 @@ export default async function DashboardPage() {
       </section>
 
       <SectionHeading
-        title="Active quests"
-        description="Complete a quest to earn XP and raise its linked stat."
-        action={
-          <Link className="button button--secondary button--sm" href="/quests">
-            Quest log <ArrowRight aria-hidden="true" size={14} />
-          </Link>
-        }
+        title="Daily Quests"
+        action={<Link className="section-link" href="/quests">View all ›</Link>}
       />
       <QuestList
-        quests={quests}
-        emptyTitle="Your quest log is clear"
-        emptyDescription="Open the Quest Log to add your first objective."
+        quests={questPreview}
+        variant="daily"
+        emptyTitle="Your daily quests are clear"
+        emptyDescription="Add a quest to give today an easy win."
       />
     </main>
   );

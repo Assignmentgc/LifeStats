@@ -1,10 +1,19 @@
-export const STAT_TONES = ["vitality", "social", "career", "mind"] as const;
+export const STAT_TONES = [
+  "vitality",
+  "strength",
+  "intellect",
+  "discipline",
+  "social",
+  "purpose",
+] as const;
 
 export type StatTone = (typeof STAT_TONES)[number];
 
 export const STAT_LABELS: Record<StatTone, string> = {
   vitality: "Vitality",
+  strength: "Strength",
+  intellect: "Intellect",
+  discipline: "Discipline",
   social: "Social",
-  career: "Career",
-  mind: "Mind",
+  purpose: "Purpose",
 };

@@ -132,7 +132,7 @@ export async function getHabitData() {
 
   const { data: completions, error: completionError } = await supabase
     .from("quest_completions")
-    .select("quest_id, completion_date")
+    .select("quest_id, completed_on")
     .in(
       "quest_id",
       dailyQuests.map((quest) => quest.id),
@@ -143,7 +143,7 @@ export async function getHabitData() {
   const datesByQuest = new Map<string, string[]>();
   for (const completion of completions ?? []) {
     const dates = datesByQuest.get(completion.quest_id) ?? [];
-    dates.push(completion.completion_date);
+    dates.push(completion.completed_on);
     datesByQuest.set(completion.quest_id, dates);
   }
 

@@ -1,6 +1,6 @@
 import type { StatTone } from "./types";
 
-type RadarStats = Record<StatTone, number>;
+type RadarStats = Pick<Record<StatTone, number>, "vitality" | "strength" | "discipline" | "intellect">;
 
 type CharacterRadarProps = {
   stats: RadarStats;
@@ -20,18 +20,20 @@ function radarPoint(tone: StatTone, value: number) {
   switch (tone) {
     case "vitality":
       return `${CENTER},${CENTER - distance}`;
-    case "social":
+    case "strength":
       return `${CENTER + distance},${CENTER}`;
-    case "career":
+    case "discipline":
       return `${CENTER},${CENTER + distance}`;
-    case "mind":
+    case "intellect":
       return `${CENTER - distance},${CENTER}`;
+    default:
+      return `${CENTER},${CENTER}`;
   }
 }
 
 /** A compact four-axis character-sheet summary for the dashboard. */
 export function CharacterRadar({ stats, className }: CharacterRadarProps) {
-  const points = (["vitality", "social", "career", "mind"] as const)
+  const points = (["vitality", "strength", "discipline", "intellect"] as const)
     .map((tone) => radarPoint(tone, stats[tone]))
     .join(" ");
 
@@ -40,9 +42,9 @@ export function CharacterRadar({ stats, className }: CharacterRadarProps) {
       className={["character-radar", className].filter(Boolean).join(" ")}
       viewBox="0 0 220 220"
       role="img"
-      aria-label={`Character stats: Vitality ${Math.round(stats.vitality)}, Social ${Math.round(
-        stats.social,
-      )}, Career ${Math.round(stats.career)}, Mind ${Math.round(stats.mind)}`}
+      aria-label={`Character stats: Vitality ${Math.round(stats.vitality)}, Strength ${Math.round(
+        stats.strength,
+      )}, Discipline ${Math.round(stats.discipline)}, Intellect ${Math.round(stats.intellect)}`}
     >
       <polygon className="character-radar__grid" points="110,20 200,110 110,200 20,110" />
       <polygon className="character-radar__grid" points="110,50 170,110 110,170 50,110" />
@@ -53,14 +55,14 @@ export function CharacterRadar({ stats, className }: CharacterRadarProps) {
       <text className="character-radar__label character-radar__label--vitality" x="110" y="12" textAnchor="middle">
         VITALITY
       </text>
-      <text className="character-radar__label character-radar__label--social" x="207" y="114">
-        SOCIAL
+      <text className="character-radar__label character-radar__label--strength" x="207" y="114">
+        STRENGTH
       </text>
-      <text className="character-radar__label character-radar__label--career" x="110" y="216" textAnchor="middle">
-        CAREER
+      <text className="character-radar__label character-radar__label--discipline" x="110" y="216" textAnchor="middle">
+        DISCIPLINE
       </text>
-      <text className="character-radar__label character-radar__label--mind" x="13" y="114" textAnchor="end">
-        MIND
+      <text className="character-radar__label character-radar__label--intellect" x="13" y="114" textAnchor="end">
+        INTELLECT
       </text>
     </svg>
   );
