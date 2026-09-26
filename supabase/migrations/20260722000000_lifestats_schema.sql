@@ -4,6 +4,7 @@
 -- after an authenticated app load, before reading the quest list. The
 -- complete_quest RPC also performs this reset as part of its transaction.
 --random comment for no reason
+--another random comment for no reason
 begin;
 
 create type public.stat_tag as enum ('vitality', 'social', 'career', 'mind');
