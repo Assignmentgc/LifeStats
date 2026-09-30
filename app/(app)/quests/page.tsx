@@ -12,7 +12,7 @@ export default async function QuestPage() {
         <div>
           <p className="eyebrow">Quest log</p>
           <h1 className="page-title">Choose your next move</h1>
-          <p className="page-description">Every completed quest banks XP and strengthens one part of your character sheet.</p>
+          <p className="page-description">Every completed quest banks XP. Record life-stat measurements separately on the stats page.</p>
         </div>
       </header>
       <div className="two-column-grid quest-page-grid">

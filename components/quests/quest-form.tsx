@@ -38,7 +38,7 @@ export function QuestForm() {
         <div className="form-grid">
           <label className="field">
             <span className="field__label">Stat</span>
-            <select className="select" defaultValue="vitality" name="tag">
+            <select className="select" defaultValue="health" name="tag">
               {STAT_NAMES.map((name) => (
                 <option key={name} value={name}>{STAT_META[name].label}</option>
               ))}

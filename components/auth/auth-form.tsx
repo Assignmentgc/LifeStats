@@ -14,14 +14,12 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const isSignUp = mode === "signup";
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setNotice(null);
     setIsLoading(true);
 
     try {
@@ -30,9 +28,6 @@ export function AuthForm({ mode }: AuthFormProps) {
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
-          },
         });
         if (signUpError) throw signUpError;
 
@@ -40,7 +35,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           router.replace("/dashboard");
           router.refresh();
         } else {
-          setNotice("Check your inbox to confirm your email, then return here to log in.");
+          throw new Error("Email confirmation is still enabled for this project. Disable Confirm email in Supabase Authentication settings.");
         }
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
@@ -83,7 +78,6 @@ export function AuthForm({ mode }: AuthFormProps) {
         />
       </label>
       {error ? <p className="form-message form-message--error">{error}</p> : null}
-      {notice ? <p className="form-message form-message--success">{notice}</p> : null}
       <Button className="auth-submit" variant="primary" size="lg" type="submit" loading={isLoading}>
         {isSignUp ? "Create character" : "Enter LifeStats"}
       </Button>

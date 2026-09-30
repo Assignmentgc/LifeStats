@@ -24,7 +24,7 @@ export default async function SignUpPage() {
         </div>
         <div className="auth-intro">
           <h2>Start your campaign</h2>
-          <p>Your first four stats are ready. You decide what progress looks like.</p>
+          <p>Your six core life statistics are ready. You decide what progress looks like.</p>
         </div>
         <AuthForm mode="signup" />
         <p className="auth-switch">

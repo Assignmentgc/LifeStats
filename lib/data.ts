@@ -1,7 +1,7 @@
-import { STAT_NAMES, type StatName } from "@/lib/constants";
+import { CORE_STAT_KEYS, type CoreStatKey, type StatName } from "@/lib/constants";
 import { getPlayerProgress } from "@/lib/level";
 import { createClient } from "@/lib/supabase/server";
-import type { Habit, JournalEntry, Quest, Stat } from "@/lib/types";
+import type { CoreStat, Habit, JournalEntry, LifeStats, Quest, Substat } from "@/lib/types";
 
 async function getAuthenticatedClient() {
   const supabase = await createClient();
@@ -13,32 +13,78 @@ async function getAuthenticatedClient() {
   return { supabase, user };
 }
 
-function getDefaultStats(userId: string): Stat[] {
-  return STAT_NAMES.map((statName) => ({
-    user_id: userId,
-    stat_name: statName,
-    value: 0,
-    updated_at: new Date(0).toISOString(),
-  }));
-}
-
-function mergeStats(userId: string, stats: Stat[] | null): Stat[] {
-  const byName = new Map((stats ?? []).map((stat) => [stat.stat_name, stat]));
-  return getDefaultStats(userId).map((fallback) => byName.get(fallback.stat_name) ?? fallback);
-}
-
 async function resetStaleDailyQuests() {
   const { supabase } = await getAuthenticatedClient();
   const { error } = await supabase.rpc("reset_daily_quests");
   if (error) throw new Error(`Could not reset daily quests: ${error.message}`);
 }
 
+type LifeScoreRow = {
+  score_type: "life" | "core" | "substat";
+  core_stat: CoreStatKey | null;
+  substat_id: string | null;
+  substat_name: string | null;
+  score: number | string;
+  measurement_count: number | string;
+};
+
+function numericValue(value: number | string | null | undefined) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function buildLifeStats(rows: LifeScoreRow[] | null): LifeStats {
+  const scoreRows = rows ?? [];
+  const substats = scoreRows.flatMap((row): Substat[] => {
+    if (row.score_type !== "substat" || !row.core_stat || !row.substat_id || !row.substat_name) {
+      return [];
+    }
+    return [{
+      id: row.substat_id,
+      core_stat: row.core_stat,
+      name: row.substat_name,
+      score: numericValue(row.score),
+      measurement_count: numericValue(row.measurement_count),
+    }];
+  });
+
+  const coreStats: CoreStat[] = CORE_STAT_KEYS.map((key) => {
+    const coreRow = scoreRows.find(
+      (row) => row.score_type === "core" && row.core_stat === key,
+    );
+    return {
+      key,
+      score: numericValue(coreRow?.score),
+      substats: substats.filter((substat) => substat.core_stat === key),
+    };
+  });
+
+  return {
+    lifeScore: numericValue(scoreRows.find((row) => row.score_type === "life")?.score),
+    coreStats,
+  };
+}
+
+async function getLifeStatsForAuthenticatedUser(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const { error: snapshotError } = await supabase.rpc("capture_my_life_score_snapshot");
+  if (snapshotError) throw new Error(snapshotError.message);
+
+  const { data, error } = await supabase.rpc("get_my_life_scores");
+  if (error) throw new Error(error.message);
+  return buildLifeStats(data as LifeScoreRow[] | null);
+}
+
+export async function getLifeStatsData() {
+  const { supabase } = await getAuthenticatedClient();
+  return getLifeStatsForAuthenticatedUser(supabase);
+}
+
 export async function getDashboardData() {
   const { supabase, user } = await getAuthenticatedClient();
   await resetStaleDailyQuests();
 
-  const [statsResult, questResult, xpResult] = await Promise.all([
-    supabase.from("stats").select("*").order("stat_name"),
+  const [lifeStats, questResult, xpResult] = await Promise.all([
+    getLifeStatsForAuthenticatedUser(supabase),
     supabase
       .from("quests")
       .select("*")
@@ -48,7 +94,6 @@ export async function getDashboardData() {
     supabase.from("xp_log").select("amount"),
   ]);
 
-  if (statsResult.error) throw new Error(statsResult.error.message);
   if (questResult.error) throw new Error(questResult.error.message);
   if (xpResult.error) throw new Error(xpResult.error.message);
 
@@ -59,32 +104,27 @@ export async function getDashboardData() {
 
   return {
     user,
-    stats: mergeStats(user.id, statsResult.data as Stat[] | null),
+    lifeStats,
     quests: (questResult.data ?? []) as Quest[],
     progress: getPlayerProgress(totalXp),
   };
 }
 
 export async function getQuestData() {
-  const { supabase, user } = await getAuthenticatedClient();
+  const { supabase } = await getAuthenticatedClient();
   await resetStaleDailyQuests();
 
-  const [statsResult, questResult] = await Promise.all([
-    supabase.from("stats").select("*").order("stat_name"),
-    supabase
-      .from("quests")
-      .select("*")
-      .order("is_completed", { ascending: true })
-      .order("is_daily", { ascending: false })
-      .order("created_at", { ascending: false }),
-  ]);
+  const { data, error } = await supabase
+    .from("quests")
+    .select("*")
+    .order("is_completed", { ascending: true })
+    .order("is_daily", { ascending: false })
+    .order("created_at", { ascending: false });
 
-  if (statsResult.error) throw new Error(statsResult.error.message);
-  if (questResult.error) throw new Error(questResult.error.message);
+  if (error) throw new Error(error.message);
 
   return {
-    stats: mergeStats(user.id, statsResult.data as Stat[] | null),
-    quests: (questResult.data ?? []) as Quest[],
+    quests: (data ?? []) as Quest[],
   };
 }
 

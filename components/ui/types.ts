@@ -1,19 +1,19 @@
 export const STAT_TONES = [
-  "vitality",
-  "strength",
+  "health",
   "intellect",
-  "discipline",
+  "progress",
   "social",
+  "prosperity",
   "purpose",
 ] as const;
 
 export type StatTone = (typeof STAT_TONES)[number];
 
 export const STAT_LABELS: Record<StatTone, string> = {
-  vitality: "Vitality",
-  strength: "Strength",
+  health: "Health",
   intellect: "Intellect",
-  discipline: "Discipline",
+  progress: "Progress",
   social: "Social",
+  prosperity: "Prosperity",
   purpose: "Purpose",
 };

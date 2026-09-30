@@ -1,25 +1,26 @@
-import { SectionHeading, StatCard } from "@/components/ui";
-import { STAT_NAMES } from "@/lib/constants";
-import { getQuestData } from "@/lib/data";
+import { CoreStatEditor } from "@/components/stats/core-stat-editor";
+import { displayScore } from "@/lib/life-stats";
+import { getLifeStatsData } from "@/lib/data";
 
 export default async function StatsPage() {
-  const { stats } = await getQuestData();
+  const lifeStats = await getLifeStatsData();
 
   return (
     <main className="page-container stats-page">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Character sheet</p>
-          <h1 className="page-title">Your stats</h1>
-          <p className="page-description">Each completed quest makes one part of your character stronger.</p>
+          <p className="eyebrow">Life score model</p>
+          <h1 className="page-title">Your life statistics</h1>
+          <p className="page-description">Record a 0–100 measurement for a substat. Substats average into a core, and the six cores average into Life.</p>
         </div>
       </header>
-      <SectionHeading title="Character Stats" />
-      <div className="stats-list stats-page__grid">
-        {STAT_NAMES.map((name) => {
-          const stat = stats.find((item) => item.stat_name === name);
-          return <StatCard key={name} tone={name} value={stat?.value ?? 0} />;
-        })}
+      <section className="life-score-card" aria-label={`Life score ${displayScore(lifeStats.lifeScore)} out of 100`}>
+        <p>Life</p>
+        <strong>{displayScore(lifeStats.lifeScore)}</strong>
+        <span>Average of Health, Intellect, Progress, Social, Prosperity, and Purpose.</span>
+      </section>
+      <div className="core-stat-editor-list">
+        {lifeStats.coreStats.map((coreStat) => <CoreStatEditor coreStat={coreStat} key={coreStat.key} />)}
       </div>
     </main>
   );

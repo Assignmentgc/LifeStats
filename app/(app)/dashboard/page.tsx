@@ -7,12 +7,12 @@ import {
   SectionHeading,
   StatCard,
 } from "@/components/ui";
-import { STAT_NAMES } from "@/lib/constants";
 import { getDashboardData } from "@/lib/data";
+import { displayScore } from "@/lib/life-stats";
 import { formatNumber } from "@/lib/utils";
 
 export default async function DashboardPage() {
-  const { user, stats, quests, progress } = await getDashboardData();
+  const { user, lifeStats, quests, progress } = await getDashboardData();
   const displayName = (user.email?.split("@")[0] || "Adventurer")
     .split(/[._-]+/)
     .filter(Boolean)
@@ -34,6 +34,15 @@ export default async function DashboardPage() {
         </Link>
       </header>
 
+      <section className="dashboard-life-score" aria-label={`Life score ${displayScore(lifeStats.lifeScore)} out of 100`}>
+        <div>
+          <p className="eyebrow">Overall score</p>
+          <h2>Life</h2>
+          <span>Average of your six core statistics</span>
+        </div>
+        <strong>{displayScore(lifeStats.lifeScore)}</strong>
+      </section>
+
       <section className="character-card" aria-label="Your character">
         <div className="character-avatar" aria-hidden="true">
           <span className="character-avatar__head" />
@@ -43,7 +52,7 @@ export default async function DashboardPage() {
           <h2>Your Character</h2>
           <p>Build the life you want, one quest at a time.</p>
           <Link className="character-customize" href="/stats">
-            <Sparkles aria-hidden="true" size={15} /> Customize
+            <Sparkles aria-hidden="true" size={15} /> View scores
           </Link>
         </div>
       </section>
@@ -71,17 +80,16 @@ export default async function DashboardPage() {
 
       <section id="stats" aria-label="Character statistics">
         <SectionHeading
-          title="Character Stats"
+          title="Core statistics"
           action={<Link className="section-link" href="/stats">View all ›</Link>}
         />
         <div className="stats-list dashboard-stats">
-          {STAT_NAMES.map((name) => {
-            const stat = stats.find((item) => item.stat_name === name);
+          {lifeStats.coreStats.map((stat) => {
             return (
               <StatCard
-                key={name}
-                tone={name}
-                value={stat?.value ?? 0}
+                key={stat.key}
+                tone={stat.key}
+                value={stat.score}
               />
             );
           })}

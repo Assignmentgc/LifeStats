@@ -14,11 +14,11 @@ import {
 } from "lucide-react";
 
 const previewStats = [
-  { name: "Vitality", value: 42, color: "#22c55e" },
-  { name: "Strength", value: 38, color: "#ef4444" },
+  { name: "Health", value: 42, color: "#22c55e" },
   { name: "Intellect", value: 51, color: "#3b82f6" },
-  { name: "Discipline", value: 35, color: "#f59e0b" },
+  { name: "Progress", value: 35, color: "#f59e0b" },
   { name: "Social", value: 44, color: "#ec4899" },
+  { name: "Prosperity", value: 38, color: "#e9c45b" },
   { name: "Purpose", value: 47, color: "#8b5cf6" },
 ];
 
@@ -27,7 +27,7 @@ const features = [
     icon: Activity,
     title: "RPG Character Stats",
     description:
-      "Six core stats — Vitality, Strength, Intellect, Discipline, Social and Purpose — each with 4 substats that grow from your real actions.",
+      "Six core statistics — Health, Intellect, Progress, Social, Prosperity and Purpose — calculated from the substats you measure.",
   },
   {
     icon: Bot,
@@ -161,7 +161,7 @@ export default function HomePage() {
                 <dd>Core stats</dd>
               </div>
               <div>
-                <dt>24</dt>
+                <dt>52</dt>
                 <dd>Substats tracked</dd>
               </div>
               <div>

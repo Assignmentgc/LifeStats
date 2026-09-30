@@ -4,11 +4,11 @@ import { STAT_LABELS, type StatTone } from "./types";
 import { cn } from "./utils";
 
 const statIcons: Record<StatTone, string> = {
-  vitality: "ϟ",
-  strength: "♟",
+  health: "✚",
   intellect: "✦",
-  discipline: "♨",
+  progress: "↗",
   social: "⌁",
+  prosperity: "◈",
   purpose: "◎",
 };
 

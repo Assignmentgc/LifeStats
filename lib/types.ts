@@ -1,10 +1,22 @@
-import type { Mood, StatName } from "@/lib/constants";
+import type { CoreStatKey, Mood, StatName } from "@/lib/constants";
 
-export type Stat = {
-  user_id: string;
-  stat_name: StatName;
-  value: number;
-  updated_at: string;
+export type Substat = {
+  id: string;
+  core_stat: CoreStatKey;
+  name: string;
+  score: number;
+  measurement_count: number;
+};
+
+export type CoreStat = {
+  key: CoreStatKey;
+  score: number;
+  substats: Substat[];
+};
+
+export type LifeStats = {
+  lifeScore: number;
+  coreStats: CoreStat[];
 };
 
 export type Quest = {

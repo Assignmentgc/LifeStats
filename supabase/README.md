@@ -1,9 +1,12 @@
 # LifeStats Supabase setup
 
 Apply every SQL migration in timestamp order. For a linked project, use
-`supabase db push`; in the SQL Editor, run the initial schema first and then
-the character-stat upgrade migration. The upgrade is required for projects
-that were created with the original four-stat schema.
+`supabase db push`. In the SQL Editor, run all three files in
+`supabase/migrations/` in filename order, including
+`20260927000000_life_stat_scoring_model.sql`. That final migration creates the
+`capture_my_life_score_snapshot()` and `get_my_life_scores()` RPCs used by the
+dashboard. The character-stat upgrade is required for projects that were
+created with the original four-stat schema.
 
 The application should call these authenticated RPCs:
 
