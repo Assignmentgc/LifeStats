@@ -138,6 +138,47 @@ a {
   color: var(--muted);
 }
 
+.billing-card {
+  display: grid;
+  max-width: 620px;
+  gap: 14px;
+  padding: clamp(22px, 4vw, 32px);
+}
+
+.billing-card h2 {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-heading);
+  font-size: 25px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.billing-card > p:not(.eyebrow) {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.65;
+}
+
+.billing-card .page-title {
+  margin-top: 3px;
+}
+
+.billing-card__actions,
+.checkout-action {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.checkout-action {
+  display: grid;
+  justify-items: start;
+}
+
 .level-badge {
   display: inline-flex;
   align-items: baseline;

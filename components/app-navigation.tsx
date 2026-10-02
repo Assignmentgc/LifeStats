@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BarChart3, BookOpenText, CircleCheckBig, Home, Repeat2 } from "lucide-react";
+import { BarChart3, BookOpenText, CircleCheckBig, CreditCard, Home, Repeat2 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 const navigation = [
@@ -10,6 +10,7 @@ const navigation = [
   { href: "/stats", label: "Stats", icon: BarChart3 },
   { href: "/habits", label: "Habits", icon: Repeat2 },
   { href: "/journal", label: "Journal", icon: BookOpenText },
+  { href: "/billing", label: "Billing", icon: CreditCard },
 ];
 
 export function AppNavigation() {
