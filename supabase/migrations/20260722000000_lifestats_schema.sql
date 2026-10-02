@@ -301,10 +301,10 @@ begin
 
   v_stat_gain := greatest(1, ceil(v_quest.xp_value::numeric / 10)::integer);
 
-  update public.stats
+  update public.stats as stat
   set value = least(100, value + v_stat_gain)
   where user_id = v_user_id
-    and stat_name = v_quest.tag
+    and stat.stat_name = v_quest.tag
   returning value into v_new_stat_value;
 
   update public.quests
