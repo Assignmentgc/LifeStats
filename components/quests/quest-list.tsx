@@ -5,6 +5,7 @@ import { ChevronRight, Trash2 } from "lucide-react";
 import { completeQuest, deleteQuest } from "@/app/actions/quests";
 import { Button, EmptyState, Panel, StatTag } from "@/components/ui";
 import type { Quest } from "@/lib/types";
+import { SUBSTAT_META } from "@/lib/constants";
 
 type QuestListProps = {
   quests: Quest[];
@@ -93,7 +94,7 @@ export function QuestList({
                 </div>
               </div>
               <div className="quest-item__meta">
-                <StatTag tone={quest.tag} />
+                <StatTag tone={quest.tag}>{quest.substat_id ? SUBSTAT_META[quest.substat_id].label : undefined}</StatTag>
                 <span className="xp-reward">{pending ? "…" : `+${quest.xp_value} XP`}</span>
                 {allowDelete ? (
                   <Button

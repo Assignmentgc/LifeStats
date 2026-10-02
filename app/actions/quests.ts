@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { STAT_NAMES, type StatName } from "@/lib/constants";
+import { SUBSTAT_IDS, SUBSTAT_META, type SubstatId } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
 
 export type QuestFormState = {
@@ -20,21 +20,22 @@ async function getUserAndClient() {
 
 function parseQuest(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
-  const tag = String(formData.get("tag") ?? "");
+  const substatId = String(formData.get("substat_id") ?? "");
   const rawXp = Number(formData.get("xp_value") ?? 10);
   const isDaily = formData.get("is_daily") === "on";
 
   if (!title || title.length > 140) {
     throw new Error("Quest titles must be between 1 and 140 characters.");
   }
-  if (!STAT_NAMES.includes(tag as StatName)) {
-    throw new Error("Choose a valid stat for this quest.");
+  if (!SUBSTAT_IDS.includes(substatId as SubstatId)) {
+    throw new Error("Choose a valid substat for this quest.");
   }
   if (!Number.isFinite(rawXp) || rawXp < 1 || rawXp > 100) {
     throw new Error("XP must be a number from 1 to 100.");
   }
 
-  return { title, tag: tag as StatName, xp_value: Math.round(rawXp), is_daily: isDaily };
+  const typedSubstatId = substatId as SubstatId;
+  return { title, tag: SUBSTAT_META[typedSubstatId].baseStat, substat_id: typedSubstatId, xp_value: Math.round(rawXp), is_daily: isDaily };
 }
 
 export async function createQuest(

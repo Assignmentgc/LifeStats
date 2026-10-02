@@ -14,12 +14,12 @@ import {
 } from "lucide-react";
 
 const previewStats = [
-  { name: "Vitality", value: 42, color: "#22c55e" },
-  { name: "Strength", value: 38, color: "#ef4444" },
-  { name: "Intellect", value: 51, color: "#3b82f6" },
-  { name: "Discipline", value: 35, color: "#f59e0b" },
-  { name: "Social", value: 44, color: "#ec4899" },
   { name: "Purpose", value: 47, color: "#8b5cf6" },
+  { name: "Vitality", value: 42, color: "#22c55e" },
+  { name: "Social", value: 44, color: "#ec4899" },
+  { name: "Finances", value: 38, color: "#e0b64d" },
+  { name: "Discipline", value: 35, color: "#f59e0b" },
+  { name: "Environment", value: 51, color: "#3b82f6" },
 ];
 
 const features = [
@@ -27,7 +27,7 @@ const features = [
     icon: Activity,
     title: "RPG Character Stats",
     description:
-      "Six core stats — Vitality, Strength, Intellect, Discipline, Social and Purpose — each with 4 substats that grow from your real actions.",
+      "Six core stats — Purpose, Vitality, Social, Finances, Discipline, and Environment — grow from direct substats shaped by your real actions.",
   },
   {
     icon: Bot,

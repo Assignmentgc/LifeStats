@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { Flame, Settings, Sparkles } from "lucide-react";
-import { QuestList } from "@/components/quests/quest-list";
+import { ListTodo, Settings, Sparkles } from "lucide-react";
 import {
   LevelBadge,
   ProgressBar,
@@ -12,15 +11,12 @@ import { getDashboardData } from "@/lib/data";
 import { formatNumber } from "@/lib/utils";
 
 export default async function DashboardPage() {
-  const { user, stats, quests, progress } = await getDashboardData();
+  const { user, stats, progress, todos, lifeScore } = await getDashboardData();
   const displayName = (user.email?.split("@")[0] || "Adventurer")
     .split(/[._-]+/)
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
-  const completedToday = quests.filter((quest) => quest.is_daily && quest.is_completed).length;
-  const dailyQuests = quests.filter((quest) => quest.is_daily && !quest.is_completed);
-  const questPreview = (dailyQuests.length ? dailyQuests : quests.filter((quest) => !quest.is_completed)).slice(0, 3);
 
   return (
     <main className="page-container dashboard-page">
@@ -29,7 +25,7 @@ export default async function DashboardPage() {
           <p className="eyebrow">Welcome back</p>
           <h1 className="sheet-title">{displayName}</h1>
         </div>
-        <Link className="dashboard-settings" href="/stats" aria-label="View character stats">
+        <Link className="dashboard-settings" href="/settings" aria-label="Open settings">
           <Settings aria-hidden="true" size={18} />
         </Link>
       </header>
@@ -41,11 +37,15 @@ export default async function DashboardPage() {
         </div>
         <div className="character-card__content">
           <h2>Your Character</h2>
-          <p>Build the life you want, one quest at a time.</p>
+          <p>Build the life you want, one check-in at a time.</p>
           <Link className="character-customize" href="/stats">
             <Sparkles aria-hidden="true" size={15} /> Customize
           </Link>
         </div>
+      </section>
+
+      <section className="life-score-card life-score-card--compact" aria-label={`LifeScore ${lifeScore} out of 100`}>
+        <div><p className="eyebrow">Weighted overall score</p><h2>LifeScore</h2></div><strong>{lifeScore}<small>/100</small></strong>
       </section>
 
       <section className="xp-section level-card" aria-label="Experience progress">
@@ -55,10 +55,6 @@ export default async function DashboardPage() {
             <p>Level {progress.level}</p>
             <strong>{formatNumber(progress.totalXp)} Total XP</strong>
           </div>
-          <span className="level-card__streak">
-            <Flame aria-hidden="true" size={17} />
-            <strong>{completedToday}</strong> today
-          </span>
         </div>
         <ProgressBar
           label="XP"
@@ -88,16 +84,20 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <SectionHeading
-        title="Daily Quests"
-        action={<Link className="section-link" href="/quests">View all ›</Link>}
-      />
-      <QuestList
-        quests={questPreview}
-        variant="daily"
-        emptyTitle="Your daily quests are clear"
-        emptyDescription="Add a quest to give today an easy win."
-      />
+      <section className="dashboard-check-in">
+        <div>
+          <p className="eyebrow">Daily reflection</p>
+          <h2>What did you do today?</h2>
+          <p>Tell your AI guide about your day and it will translate the progress into your character stats.</p>
+        </div>
+        <Link className="button button--primary" href="/check-in">Check in now</Link>
+      </section>
+
+      <Link className="dashboard-todo-card" href="/todo">
+        <div className="dashboard-todo-card__icon"><ListTodo aria-hidden="true" size={19} /></div>
+        <div><p className="eyebrow">To-Do</p><h2>{todos.length ? `${todos.length} task${todos.length === 1 ? "" : "s"} to focus on` : "Your task list is clear"}</h2><p>{todos.length ? todos.map((todo) => todo.title).join(" · ") : "Add and prioritize your next actions."}</p></div>
+        <span aria-hidden="true">›</span>
+      </Link>
     </main>
   );
 }

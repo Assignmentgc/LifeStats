@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { BarChart3, BookOpenText, CircleCheckBig, CreditCard, Home, Repeat2 } from "lucide-react";
+import { BarChart3, BookOpenText, CircleCheckBig, Home, ListTodo, Repeat2, Settings } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 const navigation = [
   { href: "/dashboard", label: "Home", icon: Home },
-  { href: "/quests", label: "Check-In", icon: CircleCheckBig },
+  { href: "/check-in", label: "Check-In", icon: CircleCheckBig },
   { href: "/stats", label: "Stats", icon: BarChart3 },
   { href: "/habits", label: "Habits", icon: Repeat2 },
   { href: "/journal", label: "Journal", icon: BookOpenText },
-  { href: "/billing", label: "Billing", icon: CreditCard },
+  { href: "/todo", label: "To-Do", icon: ListTodo },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function AppNavigation() {

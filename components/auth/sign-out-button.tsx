@@ -11,6 +11,7 @@ export function SignOutButton() {
   const [isLoading, setIsLoading] = useState(false);
 
   async function signOut() {
+    if (!window.confirm("Do you want to log out?")) return;
     setIsLoading(true);
     await createClient().auth.signOut();
     router.replace("/login");

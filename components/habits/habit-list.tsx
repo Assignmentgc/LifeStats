@@ -24,8 +24,8 @@ export function HabitList({ habits }: { habits: Habit[] }) {
   if (!habits.length) {
     return (
       <EmptyState
-        title="No daily habits yet"
-        description="Create a quest and mark it “Repeat daily” to start a streak."
+          title="No habits yet"
+          description="Use a daily check-in to record the actions that move your life forward."
       />
     );
   }

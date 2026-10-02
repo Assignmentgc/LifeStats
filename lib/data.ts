@@ -1,7 +1,70 @@
-import { STAT_NAMES, type StatName } from "@/lib/constants";
+import { DEFAULT_LIFESTATS_SETTINGS, STAT_NAMES, type LifeStatsSettings, type StatName, type SubstatId } from "@/lib/constants";
 import { getPlayerProgress } from "@/lib/level";
 import { createClient } from "@/lib/supabase/server";
-import type { Habit, JournalEntry, Quest, Stat } from "@/lib/types";
+import type { Habit, JournalEntry, Quest, Stat, Substat, Todo } from "@/lib/types";
+import { calculateLifeScore } from "@/lib/scoring";
+
+export type ChartPoint = { label: string; value: number };
+type StatProgressEvent = {
+  stat_name: StatName;
+  previous_value: number;
+  value: number;
+  created_at: string;
+};
+type QolScore = { score: number; created_at: string };
+
+function startOfCurrentMonth() {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+}
+
+function dayKey(value: Date | string) {
+  return new Date(value).toISOString().slice(0, 10);
+}
+
+function chartDayLabel(date: Date) {
+  return date.getUTCDate() === 1 || date.getUTCDay() === 1 ? String(date.getUTCDate()) : "";
+}
+
+function daysThisMonth() {
+  const start = startOfCurrentMonth();
+  const today = new Date();
+  const days: Date[] = [];
+  for (const day = new Date(start); day <= today; day.setUTCDate(day.getUTCDate() + 1)) {
+    days.push(new Date(day));
+  }
+  return days;
+}
+
+function buildMonthlyProgress(stats: Stat[], events: StatProgressEvent[]): Record<StatName, ChartPoint[]> {
+  const days = daysThisMonth();
+  const eventsByStat = new Map<StatName, StatProgressEvent[]>();
+  for (const event of events) {
+    const list = eventsByStat.get(event.stat_name) ?? [];
+    list.push(event);
+    eventsByStat.set(event.stat_name, list);
+  }
+
+  return Object.fromEntries(STAT_NAMES.map((statName) => {
+    const statEvents = eventsByStat.get(statName) ?? [];
+    let value = statEvents[0]?.previous_value ?? stats.find((stat) => stat.stat_name === statName)?.value ?? 0;
+    return [statName, days.map((day) => {
+      const changes = statEvents.filter((event) => dayKey(event.created_at) === dayKey(day));
+      if (changes.length) value = changes.at(-1)?.value ?? value;
+      return { label: chartDayLabel(day), value };
+    })];
+  })) as Record<StatName, ChartPoint[]>;
+}
+
+function buildQolTrend(scores: QolScore[]): ChartPoint[] {
+  const days = daysThisMonth();
+  let value = scores[0]?.score ?? 0;
+  return days.map((day) => {
+    const changes = scores.filter((score) => dayKey(score.created_at) === dayKey(day));
+    if (changes.length) value = changes.at(-1)?.score ?? value;
+    return { label: chartDayLabel(day), value };
+  });
+}
 
 async function getAuthenticatedClient() {
   const supabase = await createClient();
@@ -27,42 +90,97 @@ function mergeStats(userId: string, stats: Stat[] | null): Stat[] {
   return getDefaultStats(userId).map((fallback) => byName.get(fallback.stat_name) ?? fallback);
 }
 
+function mergeSubstats(userId: string, substats: Substat[] | null): Substat[] {
+  return (substats ?? []).map((substat) => ({ ...substat, user_id: userId, substat_id: substat.substat_id as SubstatId }));
+}
+
+async function getLifeStatsSettings(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const { data, error } = await supabase.from("lifestats_settings").select("spirituality_enabled, include_spirituality_in_life_score").maybeSingle();
+  if (error) throw new Error(error.message);
+  return { spiritualityEnabled: data?.spirituality_enabled ?? DEFAULT_LIFESTATS_SETTINGS.spiritualityEnabled, includeSpiritualityInLifeScore: data?.include_spirituality_in_life_score ?? DEFAULT_LIFESTATS_SETTINGS.includeSpiritualityInLifeScore } satisfies LifeStatsSettings;
+}
+
+export async function getCurrentLifeStatsSettings() {
+  const { supabase } = await getAuthenticatedClient();
+  return getLifeStatsSettings(supabase);
+}
+
 async function resetStaleDailyQuests() {
   const { supabase } = await getAuthenticatedClient();
   const { error } = await supabase.rpc("reset_daily_quests");
   if (error) throw new Error(`Could not reset daily quests: ${error.message}`);
 }
 
-export async function getDashboardData() {
+export async function getStatsData() {
   const { supabase, user } = await getAuthenticatedClient();
-  await resetStaleDailyQuests();
-
-  const [statsResult, questResult, xpResult] = await Promise.all([
+  const monthStart = startOfCurrentMonth().toISOString();
+  const [statsResult, substatsResult, settings, eventsResult, qolResult] = await Promise.all([
     supabase.from("stats").select("*").order("stat_name"),
-    supabase
-      .from("quests")
-      .select("*")
-      .order("is_completed", { ascending: true })
-      .order("created_at", { ascending: false })
-      .limit(6),
-    supabase.from("xp_log").select("amount"),
+    supabase.from("stat_subscores").select("*").order("substat_id"),
+    getLifeStatsSettings(supabase),
+    supabase.from("stat_progress_events").select("stat_name, previous_value, value, created_at").gte("created_at", monthStart).order("created_at"),
+    supabase.from("qol_scores").select("score, created_at").gte("created_at", monthStart).order("created_at"),
   ]);
 
-  if (statsResult.error) throw new Error(statsResult.error.message);
-  if (questResult.error) throw new Error(questResult.error.message);
+  if (statsResult.error || substatsResult.error) throw new Error(statsResult.error?.message ?? substatsResult.error?.message);
+  // The history tables arrive with the analytics migration. Never invent a
+  // trend: without stored history, the UI explicitly says so instead.
+  const historyReady = !eventsResult.error && !qolResult.error;
+  const stats = mergeStats(user.id, statsResult.data as Stat[] | null);
+  const events = (eventsResult.data ?? []) as StatProgressEvent[];
+  const scores = (qolResult.data ?? []) as QolScore[];
+
+  return {
+    user,
+    // Use the same persisted, user-scoped stats as the dashboard. Demo data is
+    // limited to analytics charts, so a preview can never mask real progress.
+    stats,
+    substats: mergeSubstats(user.id, substatsResult.data as Substat[] | null),
+    settings,
+    lifeScore: calculateLifeScore(Object.fromEntries(stats.map((stat) => [stat.stat_name, stat.value])) as Record<StatName, number>, mergeSubstats(user.id, substatsResult.data as Substat[] | null), settings),
+    monthlyProgress: historyReady && events.length ? buildMonthlyProgress(stats, events) : null,
+    qolTrend: historyReady && scores.length ? buildQolTrend(scores) : null,
+  };
+}
+
+export async function getDashboardData() {
+  const { supabase, user } = await getAuthenticatedClient();
+
+  const [statsResult, substatsResult, settings, xpResult, todoResult] = await Promise.all([
+    supabase.from("stats").select("*").order("stat_name"),
+    supabase.from("stat_subscores").select("*").order("substat_id"),
+    getLifeStatsSettings(supabase),
+    supabase.from("xp_log").select("amount"),
+    supabase.from("todos").select("*").eq("is_completed", false).order("created_at", { ascending: false }).limit(3),
+  ]);
+
+  if (statsResult.error || substatsResult.error) throw new Error(statsResult.error?.message ?? substatsResult.error?.message);
   if (xpResult.error) throw new Error(xpResult.error.message);
+  if (todoResult.error) throw new Error(todoResult.error.message);
 
   const totalXp = (xpResult.data ?? []).reduce(
     (total, item) => total + Number(item.amount),
     0,
   );
 
+  const stats = mergeStats(user.id, statsResult.data as Stat[] | null);
+  const substats = mergeSubstats(user.id, substatsResult.data as Substat[] | null);
   return {
     user,
-    stats: mergeStats(user.id, statsResult.data as Stat[] | null),
-    quests: (questResult.data ?? []) as Quest[],
+    stats,
+    substats,
+    settings,
+    lifeScore: calculateLifeScore(Object.fromEntries(stats.map((stat) => [stat.stat_name, stat.value])) as Record<StatName, number>, substats, settings),
     progress: getPlayerProgress(totalXp),
+    todos: (todoResult.data ?? []) as Todo[],
   };
+}
+
+export async function getTodoData() {
+  const { supabase } = await getAuthenticatedClient();
+  const { data, error } = await supabase.from("todos").select("*").eq("is_completed", false).order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Todo[];
 }
 
 export async function getQuestData() {

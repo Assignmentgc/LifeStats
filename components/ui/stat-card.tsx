@@ -5,11 +5,11 @@ import { cn } from "./utils";
 
 const statIcons: Record<StatTone, string> = {
   vitality: "ϟ",
-  strength: "♟",
-  intellect: "✦",
   discipline: "♨",
   social: "⌁",
   purpose: "◎",
+  finances: "¤",
+  environment: "◌",
 };
 
 type StatCardProps = {

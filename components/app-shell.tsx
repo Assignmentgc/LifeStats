@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { SignOutButton } from "@/components/auth/sign-out-button";
 import { AppNavigation } from "@/components/app-navigation";
 
 type AppShellProps = {
@@ -17,7 +16,6 @@ export function AppShell({ email, children }: AppShellProps) {
         </Link>
         <div className="account-menu">
           <span className="account-email" title={email}>{email}</span>
-          <SignOutButton />
         </div>
       </header>
       {children}

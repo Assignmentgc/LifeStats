@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { createQuest, type QuestFormState } from "@/app/actions/quests";
 import { Button, Panel } from "@/components/ui";
-import { STAT_META, STAT_NAMES } from "@/lib/constants";
+import { STAT_NAMES, SUBSTAT_META, getActiveSubstats } from "@/lib/constants";
 
 const initialState: QuestFormState = {};
 
@@ -37,11 +37,11 @@ export function QuestForm() {
         </label>
         <div className="form-grid">
           <label className="field">
-            <span className="field__label">Stat</span>
-            <select className="select" defaultValue="vitality" name="tag">
-              {STAT_NAMES.map((name) => (
-                <option key={name} value={name}>{STAT_META[name].label}</option>
-              ))}
+            <span className="field__label">Substat</span>
+            <select className="select" defaultValue="fitness" name="substat_id">
+              {STAT_NAMES.flatMap((name) => getActiveSubstats(name).map((substatId) => (
+                <option key={substatId} value={substatId}>{`${SUBSTAT_META[substatId].label} — ${name[0].toUpperCase()}${name.slice(1)}`}</option>
+              )))}
             </select>
           </label>
           <label className="field">

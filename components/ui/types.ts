@@ -1,19 +1,7 @@
-export const STAT_TONES = [
-  "vitality",
-  "strength",
-  "intellect",
-  "discipline",
-  "social",
-  "purpose",
-] as const;
+import { STAT_META, STAT_NAMES, type StatName } from "@/lib/constants";
 
-export type StatTone = (typeof STAT_TONES)[number];
-
-export const STAT_LABELS: Record<StatTone, string> = {
-  vitality: "Vitality",
-  strength: "Strength",
-  intellect: "Intellect",
-  discipline: "Discipline",
-  social: "Social",
-  purpose: "Purpose",
-};
+export const STAT_TONES = STAT_NAMES;
+export type StatTone = StatName;
+export const STAT_LABELS: Record<StatTone, string> = Object.fromEntries(
+  STAT_NAMES.map((name) => [name, STAT_META[name].label]),
+) as Record<StatTone, string>;
