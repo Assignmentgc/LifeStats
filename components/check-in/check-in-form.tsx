@@ -155,6 +155,23 @@ export function CheckInForm({ userId }: { userId: string }) {
     }
   }
 
+  function startNewCheckIn() {
+    if (busy.current || isListening || isPreparingMic || !session.current) return;
+    const id = crypto.randomUUID();
+    session.current = { id, timezone: session.current.timezone };
+    try {
+      sessionStorage.setItem(`lifestats-check-in-session:${userId}`, id);
+    } catch {
+      // The in-memory session still works for this visit.
+    }
+    pendingRequest.current = null;
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    setResult(null);
+    setContent("");
+    setError(null);
+    contentInput.current?.focus();
+  }
+
   async function submitCheckIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy.current || !session.current || isListening || isPreparingMic || !consent || content.trim().length < 3) return;
@@ -262,6 +279,7 @@ export function CheckInForm({ userId }: { userId: string }) {
         <Panel className="check-in-result">
           <p className="eyebrow">Evidence saved - {result.local_day}</p>
           <div className="check-in-voice-controls">
+            <Button disabled={isSubmitting || isListening || isPreparingMic} size="sm" variant="primary" onClick={startNewCheckIn}>Start a new check-in</Button>
             <Link className="section-link" href="/journal">View saved entries</Link>
             <Link className="section-link" href="/stats">View updated substats</Link>
           </div>

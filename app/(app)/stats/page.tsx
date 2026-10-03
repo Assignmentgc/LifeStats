@@ -4,7 +4,7 @@ import { STAT_META, STAT_NAMES } from "@/lib/constants";
 import { getStatsData } from "@/lib/data";
 
 export default async function StatsPage() {
-  const { checkInPoints, latestCheckInGains, lifeScore, monthlyProgress, qolTrend } = await getStatsData();
+  const { checkInPoints, latestCheckInGains, lifeScore, monthlyProgress } = await getStatsData();
 
   return (
     <main className="page-container stats-page">
@@ -25,7 +25,7 @@ export default async function StatsPage() {
           return <StatCard key={name} tone={name} value={checkInPoints.categories[name]} latestGain={latestCheckInGains === null ? null : latestCheckInGains?.[name]} description={STAT_META[name].description} />;
         })}
       </div>
-      <StatsAnalytics monthlyProgress={monthlyProgress} qolTrend={qolTrend} />
+      <StatsAnalytics monthlyProgress={monthlyProgress} />
     </main>
   );
 }

@@ -181,3 +181,20 @@ test("refresh errors distinguish a committed check-in from a failed save", async
   assert.ok(text(tree).includes("View saved entries"));
   assert.ok(text(tree).includes("View updated substats"));
 });
+
+test("starting a new check-in clears the result and opens a fresh session with the same timezone", async () => {
+  const restored = { ...savedResult, session_id: randomUUID(), timezone: "America/New_York" };
+  const h = harness({ restored, readAloud: false });
+  await h.hydrate();
+  assert.ok(text(h.render()).includes("Evidence saved"));
+  button(h.render(), "Start a new check-in").props.onClick();
+  const tree = h.render();
+  assert.ok(!text(tree).includes("Evidence saved"));
+  assert.ok(!text(tree).includes("Follow-up question"));
+  const fresh = h.storage.get("lifestats-check-in-session:test-user");
+  assert.notEqual(fresh, restored.session_id);
+  find(tree, (node) => node.type === "textarea").props.onChange({ target: { value: "Today I read for an hour." } });
+  await find(h.render(), (node) => node.type === "form").props.onSubmit({ preventDefault() {} });
+  assert.equal(h.calls.requests[0].session_id, fresh);
+  assert.equal(h.calls.requests[0].timezone, restored.timezone);
+});

@@ -762,18 +762,60 @@ a {
   letter-spacing: 0.03em;
 }
 
-.brand-mark {
-  display: grid;
-  width: 26px;
-  height: 26px;
+.app-brand__mark {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
   place-items: center;
-  border: 1px solid #9068db;
-  border-radius: 4px;
-  background: linear-gradient(135deg, #6c4cb4, #bd91e2);
-  color: #fff;
-  font-size: 14px;
-  line-height: 1;
-  box-shadow: 0 0 20px rgb(185 139 224 / 0.23);
+}
+
+.app-brand__mark svg,
+.landing-brand__mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.route-loading {
+  display: grid;
+  min-height: min(68vh, 560px);
+  place-content: center;
+  justify-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.route-loading__mark {
+  width: 72px;
+  height: 72px;
+  filter: drop-shadow(0 0 16px rgb(139 92 246 / 0.2));
+  animation: brand-mark-spin 1.5s linear infinite;
+}
+
+.route-loading__message {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+}
+
+.route-loading__message strong {
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.route-loading__message span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@keyframes brand-mark-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-loading__mark { animation: none; }
 }
 
 .app-nav {
@@ -1362,16 +1404,6 @@ body {
   font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.02em;
-}
-
-.brand-mark {
-  width: 25px;
-  height: 25px;
-  border: 0;
-  border-radius: 7px;
-  background: linear-gradient(145deg, #20c2c5, #5877de 55%, #a16ce6);
-  box-shadow: 0 0 18px rgb(73 147 220 / 0.2);
-  font-size: 13px;
 }
 
 .account-menu { gap: 4px; }

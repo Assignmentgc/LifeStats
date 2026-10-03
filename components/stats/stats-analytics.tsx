@@ -1,4 +1,4 @@
-import { Activity, ChartNoAxesCombined, Sparkles } from "lucide-react";
+import { Activity, ChartNoAxesCombined } from "lucide-react";
 import { Panel } from "@/components/ui";
 import { STAT_META, STAT_NAMES, type StatName } from "@/lib/constants";
 
@@ -6,7 +6,6 @@ type Point = { label: string; value: number };
 
 export type StatsAnalyticsProps = {
   monthlyProgress: Record<StatName, Point[]> | null;
-  qolTrend: Point[] | null;
 };
 
 const chartWidth = 600;
@@ -31,47 +30,9 @@ function chartPath(points: Point[]) {
     .join(" ");
 }
 
-export function StatsAnalytics({ monthlyProgress, qolTrend }: StatsAnalyticsProps) {
-  const labels = qolTrend?.map((point) => point.label) ?? [];
-  const latestQol = qolTrend?.at(-1)?.value;
-
+export function StatsAnalytics({ monthlyProgress }: StatsAnalyticsProps) {
   return (
     <div className="stats-analytics">
-      <Panel className="qol-card" padded>
-        <div className="analytics-card__header">
-          <div>
-            <p className="eyebrow"><Sparkles aria-hidden="true" size={13} /> Quality of life</p>
-            <h2>QoL trend</h2>
-          </div>
-          {typeof latestQol === "number" ? <div className="qol-card__score"><strong>{latestQol}</strong><span>/100</span></div> : null}
-        </div>
-        <p className="analytics-card__description">
-          A rolling view of signals from your journal entries and AI check-ins.
-        </p>
-        {qolTrend ? <div className="line-chart" role="img" aria-label={`Quality of Life trend, currently ${latestQol} out of 100`}>
-          <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} preserveAspectRatio="none" aria-hidden="true">
-            <defs>
-              <linearGradient id="qol-area" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#b98be0" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#b98be0" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            {[25, 50, 75].map((value) => {
-              const { y } = pointPosition({ label: "", value }, 0, 1);
-              return <line className="chart-grid-line" key={value} x1="0" x2={chartWidth} y1={y} y2={y} />;
-            })}
-            <path className="qol-chart__area" d={`${chartPath(qolTrend)} L ${chartWidth - chartPadding.right} ${chartHeight - chartPadding.bottom} L ${chartPadding.left} ${chartHeight - chartPadding.bottom} Z`} />
-            <path className="qol-chart__line" d={chartPath(qolTrend)} />
-            {qolTrend.map((point, index) => {
-              const { x, y } = pointPosition(point, index, qolTrend.length);
-              return <circle className="qol-chart__point" cx={x} cy={y} key={point.label} r="3.8" />;
-            })}
-          </svg>
-          <div className="chart-labels">{labels.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}</div>
-        </div>
-        : <EmptyAnalyticsState message="Your QoL trend will appear after your first AI check-in." />}
-      </Panel>
-
       <Panel className="monthly-progress-card" padded>
         <div className="analytics-card__header">
           <div>
