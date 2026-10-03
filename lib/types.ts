@@ -33,6 +33,7 @@ export type JournalEntry = {
   content: string;
   mood: Mood | null;
   created_at: string;
+  source?: "journal" | "check-in";
 };
 
 export type Habit = {

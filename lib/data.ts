@@ -2,7 +2,7 @@ import { DEFAULT_LIFESTATS_SETTINGS, STAT_NAMES, type LifeStatsSettings, type St
 import { getPlayerProgress } from "@/lib/level";
 import { createClient } from "@/lib/supabase/server";
 import type { Habit, JournalEntry, Quest, Stat, Substat, Todo } from "@/lib/types";
-import { calculateLifeScore } from "@/lib/scoring";
+import { cumulativeCheckInPoints, calculateLifeScore, parseCheckInCategoryGains } from "@/lib/scoring";
 
 export type ChartPoint = { label: string; value: number };
 type StatProgressEvent = {
@@ -111,15 +111,48 @@ async function resetStaleDailyQuests() {
   if (error) throw new Error(`Could not reset daily quests: ${error.message}`);
 }
 
+async function getLatestCheckInGains(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const { data, error } = await supabase.from("ai_check_ins")
+    .select("category_gains").order("created_at", { ascending: false }).order("id", { ascending: false })
+    .limit(1).maybeSingle();
+  if (error) throw new Error(`Could not load latest check-in gains: ${error.message}`);
+  return data ? parseCheckInCategoryGains(data.category_gains) : undefined;
+}
+
+async function getCumulativeCheckInPoints(supabase: Awaited<ReturnType<typeof createClient>>) {
+  // Page through the ledger so Supabase's row limit cannot truncate lifetime totals.
+  const scores: { substat_id: string; applied_change: number }[] = [];
+  for (let offset = 0; ; offset += 500) {
+    const { data, error } = await supabase.from("check_in_daily_scores").select("substat_id, applied_change")
+      .order("local_day").order("substat_id").range(offset, offset + 499);
+    if (error) throw new Error(`Could not load cumulative check-in points: ${error.message}`);
+    scores.push(...(data ?? []));
+    if (!data || data.length < 500) break;
+  }
+  return cumulativeCheckInPoints(scores);
+}
+
+async function getCharacterProgress(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const { data, error } = await supabase.rpc("get_my_character_progress");
+  if (error) throw new Error(`Could not load XP progress: ${error.message}`);
+  const totalXp: unknown = data?.[0]?.total_xp;
+  if (typeof totalXp !== "number" || !Number.isFinite(totalXp) || totalXp < 0) {
+    throw new Error("Invalid saved XP progress.");
+  }
+  return getPlayerProgress(totalXp);
+}
+
 export async function getStatsData() {
   const { supabase, user } = await getAuthenticatedClient();
   const monthStart = startOfCurrentMonth().toISOString();
-  const [statsResult, substatsResult, settings, eventsResult, qolResult] = await Promise.all([
+  const [statsResult, substatsResult, settings, eventsResult, qolResult, latestCheckInGains, checkInPoints] = await Promise.all([
     supabase.from("stats").select("*").order("stat_name"),
     supabase.from("stat_subscores").select("*").order("substat_id"),
     getLifeStatsSettings(supabase),
     supabase.from("stat_progress_events").select("stat_name, previous_value, value, created_at").gte("created_at", monthStart).order("created_at"),
     supabase.from("qol_scores").select("score, created_at").gte("created_at", monthStart).order("created_at"),
+    getLatestCheckInGains(supabase),
+    getCumulativeCheckInPoints(supabase),
   ]);
 
   if (statsResult.error || substatsResult.error) throw new Error(statsResult.error?.message ?? substatsResult.error?.message);
@@ -135,6 +168,8 @@ export async function getStatsData() {
     // Use the same persisted, user-scoped stats as the dashboard. Demo data is
     // limited to analytics charts, so a preview can never mask real progress.
     stats,
+    checkInPoints,
+    latestCheckInGains,
     substats: mergeSubstats(user.id, substatsResult.data as Substat[] | null),
     settings,
     lifeScore: calculateLifeScore(Object.fromEntries(stats.map((stat) => [stat.stat_name, stat.value])) as Record<StatName, number>, mergeSubstats(user.id, substatsResult.data as Substat[] | null), settings),
@@ -146,32 +181,30 @@ export async function getStatsData() {
 export async function getDashboardData() {
   const { supabase, user } = await getAuthenticatedClient();
 
-  const [statsResult, substatsResult, settings, xpResult, todoResult] = await Promise.all([
+  const [statsResult, substatsResult, settings, progress, todoResult, latestCheckInGains, checkInPoints] = await Promise.all([
     supabase.from("stats").select("*").order("stat_name"),
     supabase.from("stat_subscores").select("*").order("substat_id"),
     getLifeStatsSettings(supabase),
-    supabase.from("xp_log").select("amount"),
+    getCharacterProgress(supabase),
     supabase.from("todos").select("*").eq("is_completed", false).order("created_at", { ascending: false }).limit(3),
+    getLatestCheckInGains(supabase),
+    getCumulativeCheckInPoints(supabase),
   ]);
 
   if (statsResult.error || substatsResult.error) throw new Error(statsResult.error?.message ?? substatsResult.error?.message);
-  if (xpResult.error) throw new Error(xpResult.error.message);
   if (todoResult.error) throw new Error(todoResult.error.message);
-
-  const totalXp = (xpResult.data ?? []).reduce(
-    (total, item) => total + Number(item.amount),
-    0,
-  );
 
   const stats = mergeStats(user.id, statsResult.data as Stat[] | null);
   const substats = mergeSubstats(user.id, substatsResult.data as Substat[] | null);
   return {
     user,
     stats,
+    checkInPoints,
+    latestCheckInGains,
     substats,
     settings,
     lifeScore: calculateLifeScore(Object.fromEntries(stats.map((stat) => [stat.stat_name, stat.value])) as Record<StatName, number>, substats, settings),
-    progress: getPlayerProgress(totalXp),
+    progress,
     todos: (todoResult.data ?? []) as Todo[],
   };
 }
@@ -282,11 +315,16 @@ export async function getHabitData() {
 
 export async function getJournalEntries() {
   const { supabase } = await getAuthenticatedClient();
-  const { data, error } = await supabase
-    .from("journal_entries")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) throw new Error(error.message);
-  return (data ?? []) as JournalEntry[];
+  const [journalResult, checkInResult] = await Promise.all([
+    supabase.from("journal_entries").select("*").order("created_at", { ascending: false }),
+    supabase.from("ai_check_ins").select("id, user_id, content, created_at").order("created_at", { ascending: false }),
+  ]);
+  if (journalResult.error || checkInResult.error) {
+    throw new Error(journalResult.error?.message ?? checkInResult.error?.message);
+  }
+  const entries: JournalEntry[] = [
+    ...(journalResult.data ?? []).map((entry) => ({ ...entry, source: "journal" as const })),
+    ...(checkInResult.data ?? []).map((entry) => ({ ...entry, mood: null, source: "check-in" as const })),
+  ];
+  return entries.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
 }

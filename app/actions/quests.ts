@@ -64,6 +64,8 @@ export async function completeQuest(questId: string) {
     if (error) throw new Error(error.message);
 
     revalidatePath("/dashboard");
+    revalidatePath("/stats");
+    revalidatePath("/stats/[category]", "page");
     revalidatePath("/quests");
     revalidatePath("/habits");
     return { success: true } as const;

@@ -18,9 +18,10 @@ export function JournalList({ entries }: { entries: JournalEntry[] }) {
       {entries.map((entry) => {
         const mood = MOODS.find((item) => item.value === entry.mood);
         return (
-          <Panel className="journal-entry" key={entry.id}>
+          <Panel className="journal-entry" key={`${entry.source ?? "journal"}:${entry.id}`}>
             <div className="journal-entry__meta">
               <time dateTime={entry.created_at}>{formatDateTime(entry.created_at)}</time>
+              {entry.source === "check-in" ? <span className="mood-tag">Daily check-in</span> : null}
               {mood ? <span className="mood-tag">{mood.emoji} {mood.label}</span> : null}
             </div>
             <p>{entry.content}</p>

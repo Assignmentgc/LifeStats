@@ -1,4 +1,4 @@
-import { getActiveSubstats, getLifeScoreWeights, type LifeStatsSettings, type StatName, type SubstatId } from "@/lib/constants";
+import { getActiveSubstats, getLifeScoreWeights, STAT_NAMES, SUBSTAT_META, type LifeStatsSettings, type StatName, type SubstatId } from "@/lib/constants";
 
 export type SubstatScore = { substat_id: SubstatId; value: number };
 
@@ -6,6 +6,33 @@ export function calculateBaseStatScore(baseStat: StatName, scores: SubstatScore[
   const active = new Set(getActiveSubstats(baseStat, settings));
   const values = scores.filter((score) => active.has(score.substat_id)).map((score) => score.value);
   return values.length ? Math.round(values.reduce((total, value) => total + value, 0) / values.length) : 0;
+}
+
+export function parseCheckInCategoryGains(value: unknown): Record<StatName, number> | null {
+  if (value === null) return null;
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Invalid saved check-in gains.");
+  const gains = Object.fromEntries(STAT_NAMES.map((stat) => {
+    const gain: unknown = Reflect.get(value, stat);
+    if (typeof gain !== "number" || !Number.isFinite(gain) || gain < 0) {
+      throw new Error("Invalid saved check-in gains.");
+    }
+    return [stat, gain];
+  }));
+  return gains as Record<StatName, number>;
+}
+
+export function cumulativeCheckInPoints(scores: { substat_id: string; applied_change: number }[]) {
+  const categories = Object.fromEntries(STAT_NAMES.map((stat) => [stat, 0])) as Record<StatName, number>;
+  const substats: Partial<Record<SubstatId, number>> = {};
+  for (const score of scores) {
+    if (!Object.hasOwn(SUBSTAT_META, score.substat_id) || !Number.isFinite(score.applied_change) || score.applied_change < 0) {
+      throw new Error("Invalid saved cumulative check-in points.");
+    }
+    const id = score.substat_id as SubstatId;
+    substats[id] = (substats[id] ?? 0) + score.applied_change;
+    categories[SUBSTAT_META[id].baseStat] += score.applied_change;
+  }
+  return { categories, substats };
 }
 
 export function calculateLifeScore(baseScores: Record<StatName, number>, substatScores: SubstatScore[], settings: LifeStatsSettings) {

@@ -1029,6 +1029,22 @@ a {
   padding: 4px 0 0;
 }
 
+.check-in-voice-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.check-in-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  color: var(--muted-strong);
+  font-size: 12px;
+}
+
 .check-in-form__textarea {
   min-height: 180px;
   resize: vertical;
@@ -1720,6 +1736,13 @@ body {
 
 .stat-card__description { display: none; }
 .stat-card__footer { grid-column: auto; }
+.stat-card__value small { margin-left: 3px; color: var(--muted); font-size: 10px; font-weight: 400; }
+.stat-card__gain { color: var(--muted); font-size: 10px; line-height: 1.4; text-align: center; }
+.stat-card__gain[data-increased="true"] { color: var(--stat-color); }
+.stat-card--cumulative .stat-card__gauge { background: var(--stat-color); }
+.stat-card--cumulative:focus-visible { outline: 2px solid var(--stat-color); outline-offset: 3px; }
+.stat-card__details { color: var(--muted); font-size: 10px; text-align: center; }
+.substat-detail-list { display: grid; gap: 12px; }
 
 /* Stats analytics */
 .stats-analytics {

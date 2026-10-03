@@ -45,8 +45,9 @@ export function QuestForm() {
             </select>
           </label>
           <label className="field">
-            <span className="field__label">XP reward</span>
+            <span className="field__label">Habit XP / quest effort</span>
             <input className="input" defaultValue="10" max="100" min="1" name="xp_value" type="number" required />
+            <small>Daily habits earn this XP; check-ins earn XP separately. For one-time quests, this sets stat-reward effort only.</small>
           </label>
         </div>
         <label className="daily-toggle">
