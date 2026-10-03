@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { BrandMark } from "@/components/brand-mark";
 import { hasSupabaseConfig } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,7 @@ export default function SetupPage() {
   return (
     <main className="setup-page">
       <section className="setup-card">
+        <BrandMark className="status-mark" />
         <p className="eyebrow">One-time setup</p>
         <h1>Connect LifeStats to Supabase</h1>
         <p>

@@ -68,7 +68,7 @@ export function HabitList({ habits }: { habits: Habit[] }) {
               )}
               <Button
                 disabled={habit.completedToday || pending}
-                loading={pending}
+                loading={pending} loadingText="Saving…"
                 onClick={() => completeHabit(habit.id)}
                 size="sm"
                 variant={habit.completedToday ? "ghost" : "primary"}

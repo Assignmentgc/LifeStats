@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/auth/auth-form";
+import { BrandMark } from "@/components/brand-mark";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ export default async function SignUpPage() {
     <main className="auth-shell">
       <section className="auth-panel">
         <div className="brand-lockup">
-          <span className="brand-mark" aria-hidden="true">✦</span>
+          <span className="brand-lockup__mark" aria-hidden="true"><BrandMark /></span>
           <div>
             <p className="eyebrow">Begin your character sheet</p>
             <h1 className="brand-name">LifeStats</h1>

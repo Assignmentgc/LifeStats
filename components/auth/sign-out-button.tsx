@@ -19,7 +19,7 @@ export function SignOutButton() {
   }
 
   return (
-    <Button variant="ghost" size="sm" onClick={signOut} loading={isLoading} aria-label="Log out">
+    <Button variant="ghost" size="sm" onClick={signOut} loading={isLoading} loadingText="Logging out…" aria-label="Log out">
       {!isLoading ? <LogOut size={14} aria-hidden="true" /> : null}
       Log out
     </Button>

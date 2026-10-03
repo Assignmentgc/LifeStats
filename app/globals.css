@@ -2634,3 +2634,31 @@ body {
   .landing-card { padding: 22px; }
   .landing-final-cta { border-radius: 20px; }
 }
+
+.brand-lockup__mark {
+  display: inline-grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+}
+
+.brand-lockup__mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.status-mark {
+  display: block;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 14px;
+}
+
+.route-loading--overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  min-height: 100vh;
+  background: var(--ink);
+}

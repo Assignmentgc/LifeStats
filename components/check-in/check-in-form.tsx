@@ -224,7 +224,7 @@ export function CheckInForm({ userId }: { userId: string }) {
           {isListening ? (
             <Button onClick={() => recognition.current?.stop()}><Square aria-hidden="true" size={15} /> Stop microphone</Button>
           ) : (
-            <Button disabled={isSubmitting || !sessionReady} loading={isPreparingMic} onClick={startMicrophone}>
+            <Button disabled={isSubmitting || !sessionReady} loading={isPreparingMic} loadingText="Checking microphone…" onClick={startMicrophone}>
               <Mic aria-hidden="true" size={15} /> On-device microphone
             </Button>
           )}
@@ -269,7 +269,7 @@ export function CheckInForm({ userId }: { userId: string }) {
         </label>
         <div className="check-in-form__footer">
           <span>{content.length}/5,000</span>
-          <Button disabled={!sessionReady || !consent || content.trim().length < 3 || isListening || isPreparingMic} loading={isSubmitting} type="submit" variant="primary">
+          <Button disabled={!sessionReady || !consent || content.trim().length < 3 || isListening || isPreparingMic} loading={isSubmitting} loadingText="Saving…" type="submit" variant="primary">
             <Send aria-hidden="true" size={15} /> {followUpQuestion ? "Send follow-up response" : "Save check-in"}
           </Button>
         </div>

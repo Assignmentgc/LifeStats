@@ -9,6 +9,7 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
+  loadingText?: string;
 };
 
 export function Button({
@@ -16,6 +17,7 @@ export function Button({
   variant = "secondary",
   size = "md",
   loading = false,
+  loadingText = "Working…",
   disabled,
   type,
   children,
@@ -29,7 +31,7 @@ export function Button({
       aria-busy={loading || undefined}
       {...props}
     >
-      {loading ? "Saving…" : children}
+      {loading ? loadingText : children}
     </button>
   );
 }
