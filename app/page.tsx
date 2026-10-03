@@ -284,7 +284,7 @@ export default function HomePage() {
             <div className="landing-final-cta__glow" aria-hidden="true" />
             <h2>Your quest starts today</h2>
             <p>
-              Create your character, check in tomorrow, and watch the XP roll in. The game is
+              Create your character, complete daily habits, and watch the XP roll in. The game is
               waiting.
             </p>
             <Link className="landing-button" href="/sign-up">

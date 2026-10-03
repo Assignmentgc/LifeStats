@@ -1,4 +1,6 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
+import Link from "next/link";
+import { formatNumber } from "@/lib/utils";
 
 import { STAT_LABELS, type StatTone } from "./types";
 import { cn } from "./utils";
@@ -15,36 +17,41 @@ const statIcons: Record<StatTone, string> = {
 type StatCardProps = {
   tone: StatTone;
   value: number;
+  latestGain?: number | null;
   label?: string;
   description?: string;
   footer?: ReactNode;
   className?: string;
 };
 
-/** A labeled stat readout with the matching stat color and progress bar. */
+/** Cumulative check-in points, with category details available on activation. */
 export function StatCard({
   tone,
   value,
+  latestGain,
   label = STAT_LABELS[tone],
   description,
   footer,
   className,
 }: StatCardProps) {
-  const safeValue = Math.max(0, Math.min(100, Math.round(value)));
-
   return (
-    <div className={cn("stat-card", className)} data-tone={tone}>
+    <Link href={`/stats/${tone}`} className={cn("stat-card", "stat-card--cumulative", className)} data-tone={tone}>
       <div
         className="stat-card__gauge"
-        style={{ "--stat-progress": `${safeValue}%` } as CSSProperties}
         aria-hidden="true"
       >
         <span className="stat-card__gauge-inner">{statIcons[tone]}</span>
       </div>
       <div className="stat-card__name">{label}</div>
-      <div className="stat-card__value">{safeValue}</div>
+      <div className="stat-card__value">{formatNumber(value)}<small>points</small></div>
+      {latestGain !== undefined ? (
+        <div className="stat-card__gain" data-increased={latestGain !== null && latestGain > 0}>
+          {latestGain === null ? "Latest gain unavailable" : `+${formatNumber(latestGain)} latest check-in`}
+        </div>
+      ) : null}
       {description ? <div className="stat-card__description">{description}</div> : null}
       {footer ? <div className="stat-card__footer">{footer}</div> : null}
-    </div>
+      <span className="stat-card__details">View individual scores</span>
+    </Link>
   );
 }

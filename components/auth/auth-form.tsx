@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
 
@@ -10,7 +9,6 @@ type AuthFormProps = {
 };
 
 export function AuthForm({ mode }: AuthFormProps) {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -37,22 +35,27 @@ export function AuthForm({ mode }: AuthFormProps) {
         if (signUpError) throw signUpError;
 
         if (data.session) {
-          router.replace("/dashboard");
-          router.refresh();
-        } else {
-          setNotice("Check your inbox to confirm your email, then return here to log in.");
+          enterApp();
+          return;
         }
+        setNotice("Check your inbox to confirm your email, then return here to log in.");
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;
-        router.replace("/dashboard");
-        router.refresh();
+        enterApp();
+        return;
       }
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Something went wrong. Try again.");
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
+  }
+
+  // A full navigation sends the fresh auth cookies with a clean request. Mixing
+  // router.replace with router.refresh re-renders the auth page, whose own
+  // signed-in redirect races the client navigation and surfaces an error.
+  function enterApp() {
+    window.location.replace("/dashboard");
   }
 
   return (

@@ -1,151 +1,116 @@
 import { NextResponse } from "next/server";
-import { DEFAULT_LIFESTATS_SETTINGS, SUBSTAT_IDS, SUBSTAT_META, type SubstatId } from "@/lib/constants";
+import { DEFAULT_LIFESTATS_SETTINGS } from "@/lib/constants";
+import { CheckInError, dayInTimezone, isRecord, isUuid, parseCheckInRequest, validateAnalysis } from "@/lib/check-in/analysis";
+import { analyzeWithPerplexity, type CompactContext } from "@/lib/check-in/perplexity";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { isPrivilegedSupabaseKey } from "@/lib/supabase/credentials";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
-type Adjustment = {
-  substat_id: SubstatId;
-  change: number;
-  reason: string;
-};
-
-type AiAnalysis = {
-  summary: string;
-  adjustments: Adjustment[];
-  qol_score: number;
-};
-
-const analysisSchema = {
-  type: "object",
-  properties: {
-    summary: { type: "string" },
-    qol_score: { type: "integer", minimum: 0, maximum: 100 },
-    adjustments: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          substat_id: { type: "string", enum: SUBSTAT_IDS },
-          change: { type: "integer", minimum: -5, maximum: 5 },
-          reason: { type: "string" },
-        },
-        required: ["substat_id", "change", "reason"],
-        additionalProperties: false,
-      },
-    },
-  },
-  required: ["summary", "adjustments", "qol_score"],
-  additionalProperties: false,
-} as const;
-
-function isConfiguredKey(key: string | undefined) {
-  return Boolean(key && !key.includes("dummy") && !key.includes("replace-me"));
-}
-
-function validateAnalysis(value: unknown): AiAnalysis {
-  if (!value || typeof value !== "object") throw new Error("The AI returned an invalid analysis.");
-  const analysis = value as Partial<AiAnalysis>;
-  const qolScore = analysis.qol_score;
-  if (typeof analysis.summary !== "string" || !Array.isArray(analysis.adjustments) || !Number.isInteger(qolScore) || typeof qolScore !== "number" || qolScore < 0 || qolScore > 100) {
-    throw new Error("The AI returned an invalid analysis.");
+export async function GET(request: Request) {
+  try {
+    const sessionId = new URL(request.url).searchParams.get("session_id");
+    if (sessionId !== null && !isUuid(sessionId)) return NextResponse.json({ error: "Invalid check-in session." }, { status: 400 });
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) return NextResponse.json({ error: "Please sign in to view check-ins." }, { status: 401 });
+    let query = supabase.from("ai_check_ins").select("id, session_id").eq("user_id", user.id).not("session_id", "is", null);
+    if (sessionId) query = query.eq("session_id", sessionId);
+    const { data: entry, error } = await query.order("created_at", { ascending: false }).limit(1).maybeSingle();
+    if (error) return NextResponse.json({ error: "Check-in history needs the evidence database migration." }, { status: 503 });
+    if (!entry) return NextResponse.json({ entry_id: null });
+    const { data, error: resultError } = await createAdminClient().rpc("get_check_in_result", { p_user_id: user.id, p_entry_id: entry.id });
+    if (resultError) throw new Error("Could not restore check-in session.");
+    return NextResponse.json({ ...data, session_id: entry.session_id });
+  } catch {
+    console.error("Check-in history failed");
+    return NextResponse.json({ error: "Could not restore your check-in session. Please try again." }, { status: 503 });
   }
-
-  const changes = new Map<SubstatId, Adjustment>();
-  for (const item of analysis.adjustments) {
-    if (!item || typeof item !== "object") continue;
-    const adjustment = item as Partial<Adjustment>;
-    const change = adjustment.change;
-    if (!SUBSTAT_IDS.includes(adjustment.substat_id as SubstatId) || typeof change !== "number" || !Number.isInteger(change) || Math.abs(change) > 5) continue;
-
-    const substatId = adjustment.substat_id as SubstatId;
-    const previous = changes.get(substatId);
-    changes.set(substatId, {
-      substat_id: substatId,
-      change: Math.max(-5, Math.min(5, (previous?.change ?? 0) + change)),
-      reason: typeof adjustment.reason === "string" ? adjustment.reason.slice(0, 240) : "",
-    });
-  }
-
-  return {
-    summary: analysis.summary.trim().slice(0, 500),
-    adjustments: [...changes.values()].filter((adjustment) => adjustment.change !== 0),
-    qol_score: qolScore,
-  };
-}
-
-function buildWellbeingContext(
-  journals: { content: string; mood: string | null; created_at: string }[],
-  checkIns: { content: string; summary: string; created_at: string }[],
-) {
-  const recentJournals = journals.map((entry) => `Journal (${entry.created_at.slice(0, 10)}, mood: ${entry.mood ?? "not recorded"}): ${entry.content.slice(0, 700)}`);
-  const recentCheckIns = checkIns.map((entry) => `Earlier check-in (${entry.created_at.slice(0, 10)}): ${entry.content.slice(0, 700)} | Summary: ${entry.summary.slice(0, 300)}`);
-  return [...recentJournals, ...recentCheckIns].join("\n\n");
 }
 
 export async function POST(request: Request) {
+  const receivedAt = new Date();
   try {
-    const body = await request.json() as { content?: unknown };
-    const content = typeof body.content === "string" ? body.content.trim() : "";
-    if (content.length < 3 || content.length > 5000) {
-      return NextResponse.json({ error: "Your check-in must be between 3 and 5,000 characters." }, { status: 400 });
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      throw new CheckInError("Send a valid JSON check-in.", 400, "invalid_json_input");
     }
-
+    const input = parseCheckInRequest(body);
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Please sign in to submit a check-in." }, { status: 401 });
-
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!isConfiguredKey(apiKey)) {
-      return NextResponse.json({ error: "AI check-ins are ready, but need your real API key before they can update stats." }, { status: 503 });
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) throw new CheckInError("Please sign in to submit a check-in.", 401, "unauthenticated");
+    if (!isPrivilegedSupabaseKey(process.env.SUPABASE_SERVICE_ROLE_KEY)) {
+      throw new CheckInError("Check-in storage requires a server-only Supabase secret key or service_role key. The publishable browser key cannot save entries; ask the administrator to update SUPABASE_SERVICE_ROLE_KEY.", 503, "invalid_server_credential");
     }
-
-    const contextSince = new Date();
-    contextSince.setUTCDate(contextSince.getUTCDate() - 30);
-    const [journalsResult, checkInsResult] = await Promise.all([
-      supabase.from("journal_entries").select("content, mood, created_at").gte("created_at", contextSince.toISOString()).order("created_at", { ascending: false }).limit(20),
-      supabase.from("ai_check_ins").select("content, summary, created_at").gte("created_at", contextSince.toISOString()).order("created_at", { ascending: false }).limit(20),
+    const apiKey = process.env.PERPLEXITY_API_KEY;
+    if (process.env.PERPLEXITY_CHECK_INS_ENABLED !== "true" || !apiKey || apiKey.includes("replace-me") || !process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY.includes("replace-me")) {
+      throw new CheckInError("AI check-ins need server configuration before entries can be saved.", 503, "not_configured");
+    }
+    const admin = createAdminClient();
+    const { data: existing, error: existingError } = await supabase.from("ai_check_ins")
+      .select("id, content, session_id").eq("request_id", input.requestId).maybeSingle();
+    if (existingError) throw new CheckInError("Check-in storage is unavailable. Please check the database migrations.", 503, "storage_unavailable");
+    if (existing) {
+      const { data: session, error: sessionError } = await supabase.from("check_in_sessions").select("timezone").eq("id", input.sessionId).maybeSingle();
+      if (sessionError) throw new Error("Could not load check-in session.");
+      if (existing.content !== input.content || existing.session_id !== input.sessionId || session?.timezone !== input.timezone) {
+        throw new CheckInError("This request was already used for a different entry. Reload before submitting.", 409, "request_conflict");
+      }
+      const { data, error } = await admin.rpc("get_check_in_result", { p_user_id: user.id, p_entry_id: existing.id });
+      if (error) throw new Error("Could not load the saved check-in.");
+      return NextResponse.json(data);
+    }
+    const [settingsResult, entriesResult, evidenceResult, questsResult] = await Promise.all([
+      supabase.from("lifestats_settings").select("spirituality_enabled, check_in_timezone").maybeSingle(),
+      supabase.from("ai_check_ins").select("analysis").eq("session_id", input.sessionId).order("created_at", { ascending: false }).limit(3),
+      supabase.from("check_in_evidence").select("substat_id, activity_key, observation, direction, local_day").gte("created_at", new Date(receivedAt.getTime() - 48 * 60 * 60 * 1000).toISOString()).order("created_at", { ascending: false }).limit(72),
+      supabase.from("quests").select("id, title, substat_id, completed_at").eq("is_completed", true).gte("completed_at", new Date(receivedAt.getTime() - 48 * 60 * 60 * 1000).toISOString()).limit(30),
     ]);
-    if (journalsResult.error || checkInsResult.error) throw new Error("Could not load wellbeing context.");
-    const { data: settingsData, error: settingsError } = await supabase.from("lifestats_settings").select("spirituality_enabled").maybeSingle();
-    if (settingsError) throw new Error("Could not load LifeStats settings.");
-    const spiritualityEnabled = settingsData?.spirituality_enabled ?? DEFAULT_LIFESTATS_SETTINGS.spiritualityEnabled;
-    const wellbeingContext = buildWellbeingContext(journalsResult.data ?? [], checkInsResult.data ?? []);
-
-    const aiResponse = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-        store: false,
-        instructions: `You are LifeStats' encouraging, grounded daily check-in guide. Analyze only the user's stated actions and experiences. Return JSON matching the schema. Each adjustment must target one direct substat and include a concise evidence-based reason. Award small, conservative changes from -5 to +5 total per substat. Do not invent facts, diagnose health or mental health conditions, or reward unsafe behavior. Use an empty adjustments list when there is not enough evidence. ${spiritualityEnabled ? "Spirituality may be assessed only from relevant user-provided information." : "Do not return spirituality adjustments; spirituality tracking is off."} Keep the summary warm, specific, and under 70 words. Set qol_score to a conservative 0–100 reflective wellbeing signal, not a health assessment or diagnosis.`,
-        input: `Today's check-in:\n${content}\n\nRecent user context from the past 30 days:\n${wellbeingContext || "No earlier journal entries or check-ins were recorded."}`,
-        text: { format: { type: "json_schema", name: "life_stats_check_in", strict: true, schema: analysisSchema } },
-      }),
-      signal: AbortSignal.timeout(20_000),
-    });
-
-    if (!aiResponse.ok) {
-      console.error("OpenAI check-in request failed", aiResponse.status);
-      return NextResponse.json({ error: "The AI guide is unavailable right now. Please try again shortly." }, { status: 502 });
+    if (settingsResult.error || entriesResult.error || evidenceResult.error || questsResult.error) {
+      throw new CheckInError("Could not load check-in context. Please check the database migrations.", 503, "context_unavailable");
     }
-
-    const aiBody = await aiResponse.json() as { output_text?: unknown };
-    if (typeof aiBody.output_text !== "string") throw new Error("The AI did not return a completed response.");
-    const analysis = validateAnalysis(JSON.parse(aiBody.output_text));
-    if (!spiritualityEnabled) analysis.adjustments = analysis.adjustments.filter((adjustment) => adjustment.substat_id !== "spirituality");
-
-    const { error } = await supabase.rpc("apply_ai_check_in", {
-      p_content: content,
-      p_summary: analysis.summary,
-      p_adjustments: analysis.adjustments,
-      p_qol_score: analysis.qol_score,
+    if (settingsResult.data?.check_in_timezone && settingsResult.data.check_in_timezone !== input.timezone) {
+      throw new CheckInError(`Check-ins use your saved timezone (${settingsResult.data.check_in_timezone}). Your device timezone must match for now.`, 409, "timezone_conflict");
+    }
+    const localDay = dayInTimezone(receivedAt, input.timezone);
+    const spiritualityEnabled = settingsResult.data?.spirituality_enabled ?? DEFAULT_LIFESTATS_SETTINGS.spiritualityEnabled;
+    const completedQuests = (questsResult.data ?? []).filter((quest) => typeof quest.completed_at === "string" && dayInTimezone(new Date(quest.completed_at), input.timezone) === localDay);
+    const context: CompactContext = {
+      spirituality_enabled: spiritualityEnabled,
+      prior_entries: (entriesResult.data ?? []).flatMap(({ analysis }) => isRecord(analysis) && typeof analysis.acknowledgement === "string" ? [{
+        acknowledgement: analysis.acknowledgement,
+        follow_up_question: typeof analysis.follow_up_question === "string" ? analysis.follow_up_question : null,
+      }] : []),
+      today_evidence: (evidenceResult.data ?? []).filter((entry) => entry.local_day === localDay),
+      completed_quests: completedQuests,
+    };
+    const model = process.env.PERPLEXITY_MODEL || "google/gemini-3.1-flash-lite";
+    const rawAnalysis = await analyzeWithPerplexity(input.content, context, apiKey, model);
+    const analysis = validateAnalysis(rawAnalysis, input.content, spiritualityEnabled, new Set(completedQuests.map((quest) => quest.id)));
+    const { data, error } = await admin.rpc("save_check_in_evidence", {
+      p_user_id: user.id,
+      p_session_id: input.sessionId,
+      p_request_id: input.requestId,
+      p_content: input.content,
+      p_timezone: input.timezone,
+      p_received_at: receivedAt.toISOString(),
+      p_analysis: analysis,
+      p_model: model,
     });
-    if (error) throw new Error(error.message);
-
-    return NextResponse.json(analysis);
+    if (error) {
+      console.error("Check-in persistence failed", { code: error.code });
+      if (error.code === "42501") throw new CheckInError("Check-in storage permissions are not configured. Verify the server-only Supabase credential and database function grants.", 503, "storage_permission_denied");
+      if (error.code === "23505" || error.code === "22023") throw new CheckInError("The session or timezone changed. Reload before submitting again.", 409, "session_conflict");
+      throw new CheckInError("Your entry could not be saved. Your text is still here; please retry.", 503, "save_failed");
+    }
+    return NextResponse.json(data);
   } catch (error) {
-    console.error("Check-in failed", error);
-    return NextResponse.json({ error: "Your check-in could not be processed. Please try again." }, { status: 500 });
+    // Never log journal text, provider bodies, or credential-bearing errors.
+    const known = error instanceof CheckInError;
+    console.error("Check-in failed", { code: known ? error.code : "unexpected_error" });
+    return NextResponse.json({ error: known ? error.message : "Your check-in could not be processed. Your text is still here; please retry." }, { status: known ? error.status : 500 });
   }
 }

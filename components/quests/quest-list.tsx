@@ -19,7 +19,7 @@ export function QuestList({
   quests,
   allowDelete = false,
   emptyTitle = "No quests yet",
-  emptyDescription = "Add a small, specific quest and turn your next action into XP.",
+  emptyDescription = "Add a small, specific quest to build your stats. Daily habits also earn XP.",
   variant = "standard",
 }: QuestListProps) {
   const [isPending, startTransition] = useTransition();
@@ -66,7 +66,7 @@ export function QuestList({
                 onClick={() => markComplete(quest.id)}
                 type="button"
               >
-                <span className="quest-item__xp-chip">+{quest.xp_value}</span>
+                <span className="quest-item__xp-chip">{quest.is_daily ? `+${quest.xp_value}` : "Stats"}</span>
                 <span className="quest-item__title">{quest.title}</span>
                 <ChevronRight aria-hidden="true" className="quest-item__chevron" size={18} />
               </button>
@@ -95,7 +95,7 @@ export function QuestList({
               </div>
               <div className="quest-item__meta">
                 <StatTag tone={quest.tag}>{quest.substat_id ? SUBSTAT_META[quest.substat_id].label : undefined}</StatTag>
-                <span className="xp-reward">{pending ? "…" : `+${quest.xp_value} XP`}</span>
+                <span className="xp-reward">{pending ? "…" : quest.is_daily ? `+${quest.xp_value} XP` : "Stat progress only"}</span>
                 {allowDelete ? (
                   <Button
                     aria-label={`Delete ${quest.title}`}

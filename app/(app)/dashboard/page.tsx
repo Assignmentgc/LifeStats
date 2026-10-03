@@ -11,7 +11,7 @@ import { getDashboardData } from "@/lib/data";
 import { formatNumber } from "@/lib/utils";
 
 export default async function DashboardPage() {
-  const { user, stats, progress, todos, lifeScore } = await getDashboardData();
+  const { user, checkInPoints, latestCheckInGains, progress, todos, lifeScore } = await getDashboardData();
   const displayName = (user.email?.split("@")[0] || "Adventurer")
     .split(/[._-]+/)
     .filter(Boolean)
@@ -70,14 +70,15 @@ export default async function DashboardPage() {
           title="Character Stats"
           action={<Link className="section-link" href="/stats">View all ›</Link>}
         />
+        <p className="check-in-result__quiet">All-time check-in points, plus your latest check-in&apos;s impact. Select a category to see individual scores.</p>
         <div className="stats-list dashboard-stats">
           {STAT_NAMES.map((name) => {
-            const stat = stats.find((item) => item.stat_name === name);
             return (
               <StatCard
                 key={name}
                 tone={name}
-                value={stat?.value ?? 0}
+                value={checkInPoints.categories[name]}
+                latestGain={latestCheckInGains === null ? null : latestCheckInGains?.[name]}
               />
             );
           })}
@@ -88,7 +89,7 @@ export default async function DashboardPage() {
         <div>
           <p className="eyebrow">Daily reflection</p>
           <h2>What did you do today?</h2>
-          <p>Tell your AI guide about your day and it will translate the progress into your character stats.</p>
+          <p>Save evidence from your day. Eligible gains update your Life Stats immediately, capped at +5 per substat per day.</p>
         </div>
         <Link className="button button--primary" href="/check-in">Check in now</Link>
       </section>
