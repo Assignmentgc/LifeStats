@@ -304,6 +304,9 @@ export default function HomePage() {
               <Link href="/login">Log in</Link>
               <Link href="/sign-up">Sign up</Link>
               <Link href="/privacy">Privacy</Link>
+              <a href="mailto:lifestatsfun@gmail.com?subject=LifeStats%20account%20deletion">
+                Request account deletion
+              </a>
             </div>
           </div>
         </div>

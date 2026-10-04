@@ -170,8 +170,8 @@ export default function PrivacyPage() {
           </p>
           <p>
             <strong>To delete your account and data</strong>, email{" "}
-            <a href="mailto:ramu.gentala@gmail.com?subject=LifeStats%20account%20deletion">
-              ramu.gentala@gmail.com
+            <a href="mailto:lifestatsfun@gmail.com?subject=LifeStats%20account%20deletion">
+              lifestatsfun@gmail.com
             </a>{" "}
             from the address you use to sign in, with the subject &quot;LifeStats account
             deletion&quot;. We will delete your account and its associated content
@@ -198,14 +198,14 @@ export default function PrivacyPage() {
             LifeStats is not designed for children and does not knowingly collect
             personal information from children under 13. If you believe a child has
             done so, email{" "}
-            <a href="mailto:ramu.gentala@gmail.com">ramu.gentala@gmail.com</a> to
+            <a href="mailto:lifestatsfun@gmail.com">lifestatsfun@gmail.com</a> to
             request removal.
           </p>
           <p>
             We may update this policy when the service changes. The effective date at
             the top shows when this version was last updated. For privacy questions or
             requests, email{" "}
-            <a href="mailto:ramu.gentala@gmail.com">ramu.gentala@gmail.com</a>.
+            <a href="mailto:lifestatsfun@gmail.com">lifestatsfun@gmail.com</a>.
           </p>
         </section>
       </article>
