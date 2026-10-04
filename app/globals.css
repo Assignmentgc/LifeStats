@@ -2039,6 +2039,20 @@ body {
 .app-nav__link--active:hover { color: #a77cea; }
 .app-navigation .app-nav__link svg { display: block; }
 
+/* Keep all seven tabs on screen on narrow phones instead of scrolling the bar sideways. */
+.app-nav__link { min-width: 0; }
+.app-nav__link span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 430px) {
+  .app-navigation { padding-right: 4px; padding-left: 4px; }
+  .app-nav__link { padding: 4px 0; }
+}
+
+@media (max-width: 360px) {
+  .app-nav__link { font-size: 9px; }
+  .app-nav__link svg { width: 17px; height: 17px; }
+}
+
 .empty-state {
   min-height: 130px;
   border-color: var(--panel-line);
