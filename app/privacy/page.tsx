@@ -29,8 +29,10 @@ export default function PrivacyPage() {
           <p className="page-description">Effective October 4, 2026</p>
           <p>
             LifeStats is a personal growth tracker for your journal, habits, quests, stats,
-            and optional AI check-ins. This policy explains what the service handles and
-            when information goes to another provider.
+            and optional AI check-ins. This policy covers the LifeStats website and the
+            LifeStats Android app, which opens the same website in your device&apos;s
+            browser. It explains what the service handles and when information goes to
+            another provider.
           </p>
         </header>
 
@@ -158,17 +160,25 @@ export default function PrivacyPage() {
           </p>
         </section>
 
-        <section className="privacy-section">
+        <section className="privacy-section" id="delete-account">
           <h2>Retention, access, and deletion</h2>
           <p>
             Your account and saved content remain in the service database while the
             account is active, unless removed sooner. You can manage or delete some
             content in the app, including journal entries, quests, and to-do items.
-            This version does not provide a self-service account deletion or data export tool. To
-            request account deletion or help with your information, contact the person
-            or organization that operates your LifeStats service. Deleting an account
-            removes associated records where supported by the database, subject to
-            backups, legal obligations, and provider retention practices.
+            This version does not provide a self-service account deletion or data export tool.
+          </p>
+          <p>
+            <strong>To delete your account and data</strong>, email{" "}
+            <a href="mailto:ramu.gentala@gmail.com?subject=LifeStats%20account%20deletion">
+              ramu.gentala@gmail.com
+            </a>{" "}
+            from the address you use to sign in, with the subject &quot;LifeStats account
+            deletion&quot;. We will delete your account and its associated content
+            (journal entries, check-ins, habits, quests, to-do items, stats, and XP)
+            within 30 days and confirm by email. You can use the same address to ask for
+            a copy of your information. Residual copies may remain in provider backups
+            for a limited period, or where we must keep them to meet legal obligations.
           </p>
         </section>
 
@@ -187,13 +197,15 @@ export default function PrivacyPage() {
           <p>
             LifeStats is not designed for children and does not knowingly collect
             personal information from children under 13. If you believe a child has
-            done so, contact the service operator to request removal.
+            done so, email{" "}
+            <a href="mailto:ramu.gentala@gmail.com">ramu.gentala@gmail.com</a> to
+            request removal.
           </p>
           <p>
             We may update this policy when the service changes. The effective date at
             the top shows when this version was last updated. For privacy questions or
-            requests, contact the person or organization that provided access to your
-            LifeStats service.
+            requests, email{" "}
+            <a href="mailto:ramu.gentala@gmail.com">ramu.gentala@gmail.com</a>.
           </p>
         </section>
       </article>
