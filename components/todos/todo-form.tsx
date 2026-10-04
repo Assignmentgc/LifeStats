@@ -34,7 +34,7 @@ export function TodoForm() {
         </label>
         {state.error ? <p className="form-message form-message--error">{state.error}</p> : null}
         {state.success ? <p className="form-message form-message--success">{state.success}</p> : null}
-        <Button loading={isPending} type="submit" variant="primary">Add task</Button>
+        <Button loading={isPending} loadingText="Adding…" type="submit" variant="primary">Add task</Button>
       </form>
     </Panel>
   );

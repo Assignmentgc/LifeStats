@@ -11,7 +11,6 @@ type StatProgressEvent = {
   value: number;
   created_at: string;
 };
-type QolScore = { score: number; created_at: string };
 
 function startOfCurrentMonth() {
   const now = new Date();
@@ -54,16 +53,6 @@ function buildMonthlyProgress(stats: Stat[], events: StatProgressEvent[]): Recor
       return { label: chartDayLabel(day), value };
     })];
   })) as Record<StatName, ChartPoint[]>;
-}
-
-function buildQolTrend(scores: QolScore[]): ChartPoint[] {
-  const days = daysThisMonth();
-  let value = scores[0]?.score ?? 0;
-  return days.map((day) => {
-    const changes = scores.filter((score) => dayKey(score.created_at) === dayKey(day));
-    if (changes.length) value = changes.at(-1)?.score ?? value;
-    return { label: chartDayLabel(day), value };
-  });
 }
 
 async function getAuthenticatedClient() {
@@ -145,12 +134,11 @@ async function getCharacterProgress(supabase: Awaited<ReturnType<typeof createCl
 export async function getStatsData() {
   const { supabase, user } = await getAuthenticatedClient();
   const monthStart = startOfCurrentMonth().toISOString();
-  const [statsResult, substatsResult, settings, eventsResult, qolResult, latestCheckInGains, checkInPoints] = await Promise.all([
+  const [statsResult, substatsResult, settings, eventsResult, latestCheckInGains, checkInPoints] = await Promise.all([
     supabase.from("stats").select("*").order("stat_name"),
     supabase.from("stat_subscores").select("*").order("substat_id"),
     getLifeStatsSettings(supabase),
     supabase.from("stat_progress_events").select("stat_name, previous_value, value, created_at").gte("created_at", monthStart).order("created_at"),
-    supabase.from("qol_scores").select("score, created_at").gte("created_at", monthStart).order("created_at"),
     getLatestCheckInGains(supabase),
     getCumulativeCheckInPoints(supabase),
   ]);
@@ -158,10 +146,9 @@ export async function getStatsData() {
   if (statsResult.error || substatsResult.error) throw new Error(statsResult.error?.message ?? substatsResult.error?.message);
   // The history tables arrive with the analytics migration. Never invent a
   // trend: without stored history, the UI explicitly says so instead.
-  const historyReady = !eventsResult.error && !qolResult.error;
+  const historyReady = !eventsResult.error;
   const stats = mergeStats(user.id, statsResult.data as Stat[] | null);
   const events = (eventsResult.data ?? []) as StatProgressEvent[];
-  const scores = (qolResult.data ?? []) as QolScore[];
 
   return {
     user,
@@ -174,7 +161,6 @@ export async function getStatsData() {
     settings,
     lifeScore: calculateLifeScore(Object.fromEntries(stats.map((stat) => [stat.stat_name, stat.value])) as Record<StatName, number>, mergeSubstats(user.id, substatsResult.data as Substat[] | null), settings),
     monthlyProgress: historyReady && events.length ? buildMonthlyProgress(stats, events) : null,
-    qolTrend: historyReady && scores.length ? buildQolTrend(scores) : null,
   };
 }
 

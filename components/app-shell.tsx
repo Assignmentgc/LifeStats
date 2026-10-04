@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppNavigation } from "@/components/app-navigation";
+import { BrandMark } from "@/components/brand-mark";
 
 type AppShellProps = {
   email: string;
@@ -11,7 +12,9 @@ export function AppShell({ email, children }: AppShellProps) {
     <div className="app-shell">
       <header className="app-topbar">
         <Link className="app-brand" href="/dashboard" aria-label="LifeStats dashboard">
-          <span className="brand-mark" aria-hidden="true">✦</span>
+          <span className="app-brand__mark">
+            <BrandMark />
+          </span>
           <span>LifeStats</span>
         </Link>
         <div className="account-menu">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { RouteLoader } from "@/components/route-loader";
 import { Button } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
 
@@ -14,6 +15,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEntering, setIsEntering] = useState(false);
   const isSignUp = mode === "signup";
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -55,10 +57,13 @@ export function AuthForm({ mode }: AuthFormProps) {
   // router.replace with router.refresh re-renders the auth page, whose own
   // signed-in redirect races the client navigation and surfaces an error.
   function enterApp() {
+    setIsEntering(true);
     window.location.replace("/dashboard");
   }
 
   return (
+    <>
+    {isEntering ? <RouteLoader overlay message="Entering your space..." /> : null}
     <form className="auth-form" onSubmit={onSubmit}>
       <label className="field">
         <span className="field__label">Email</span>
@@ -87,9 +92,10 @@ export function AuthForm({ mode }: AuthFormProps) {
       </label>
       {error ? <p className="form-message form-message--error">{error}</p> : null}
       {notice ? <p className="form-message form-message--success">{notice}</p> : null}
-      <Button className="auth-submit" variant="primary" size="lg" type="submit" loading={isLoading}>
+      <Button className="auth-submit" variant="primary" size="lg" type="submit" loading={isLoading} loadingText={isSignUp ? "Creating character…" : "Signing in…"}>
         {isSignUp ? "Create character" : "Enter LifeStats"}
       </Button>
     </form>
+    </>
   );
 }

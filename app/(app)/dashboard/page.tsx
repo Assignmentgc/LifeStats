@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ListTodo, Settings, Sparkles } from "lucide-react";
+import { ChartLine, ListTodo, Settings } from "lucide-react";
 import {
   LevelBadge,
   ProgressBar,
@@ -39,7 +39,7 @@ export default async function DashboardPage() {
           <h2>Your Character</h2>
           <p>Build the life you want, one check-in at a time.</p>
           <Link className="character-customize" href="/stats">
-            <Sparkles aria-hidden="true" size={15} /> Customize
+            <ChartLine aria-hidden="true" size={15} /> View stats
           </Link>
         </div>
       </section>

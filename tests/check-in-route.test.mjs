@@ -178,6 +178,18 @@ test("history restores the latest user-owned session when browser session storag
   assert.equal(calls.rpc[0].args.p_entry_id, existing.id);
 });
 
+test("history returns every turn of the restored session, oldest first", async () => {
+  const existing = { id: randomUUID(), session_id: randomUUID() };
+  const priorEntries = [
+    { id: randomUUID(), content: "First entry", analysis: analysis(), created_at: "2026-10-02T12:00:00Z" },
+    { id: existing.id, content: "A reply", analysis: analysis(), created_at: "2026-10-02T12:05:00Z" },
+  ];
+  const { route, calls } = loadRoute({ existing, priorEntries });
+  const body = await (await route.GET(new Request("http://localhost/api/check-in"))).json();
+  assert.deepEqual(body.turns.map((entry) => entry.content), ["First entry", "A reply"]);
+  assert.ok(calls.filters.some((filter) => filter.table === "ai_check_ins" && filter.column === "session_id" && filter.value === existing.session_id));
+});
+
 test("history validates explicit sessions and reports empty, unauthorized, or failed lookups", async () => {
   for (const [options, suffix, status] of [
     [{}, "", 200],

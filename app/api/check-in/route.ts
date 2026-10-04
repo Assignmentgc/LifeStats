@@ -22,7 +22,11 @@ export async function GET(request: Request) {
     if (!entry) return NextResponse.json({ entry_id: null });
     const { data, error: resultError } = await createAdminClient().rpc("get_check_in_result", { p_user_id: user.id, p_entry_id: entry.id });
     if (resultError) throw new Error("Could not restore check-in session.");
-    return NextResponse.json({ ...data, session_id: entry.session_id });
+    const { data: turns, error: turnsError } = await supabase.from("ai_check_ins")
+      .select("id, content, analysis, created_at").eq("user_id", user.id).eq("session_id", entry.session_id)
+      .not("analysis", "is", null).order("created_at", { ascending: true }).limit(50);
+    if (turnsError) throw new Error("Could not restore check-in history.");
+    return NextResponse.json({ ...data, session_id: entry.session_id, turns: turns ?? [] });
   } catch {
     console.error("Check-in history failed");
     return NextResponse.json({ error: "Could not restore your check-in session. Please try again." }, { status: 503 });

@@ -11,7 +11,7 @@ export default async function CheckInPage() {
         <p className="eyebrow">Daily Check-In</p>
         <h1 className="page-title">Tell me about your day.</h1>
         <p className="page-description">
-          Share what you did, how it felt, and what you learned in US English. Your guide saves evidence and applies eligible Life Stat gains immediately, within your daily limit.
+          Write a few lines about what you did. Real, specific activities earn points.
         </p>
       </header>
       <CheckInForm userId={user.id} />

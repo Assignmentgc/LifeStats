@@ -12,6 +12,7 @@ import {
   Target,
   UserRound,
 } from "lucide-react";
+import { BrandMark } from "@/components/brand-mark";
 
 const previewStats = [
   { name: "Purpose", value: 47, color: "#8b5cf6" },
@@ -45,19 +46,19 @@ const features = [
     icon: BookOpen,
     title: "Journal & Mood Tracking",
     description:
-      "Reflect with guided journaling and mood tracking, woven into your character's Quality of Life score.",
+      "Capture quick reflections with an optional mood, saved alongside your daily check-ins.",
   },
   {
     icon: ChartLine,
     title: "Insights & Trends",
     description:
-      "Interactive monthly charts show exactly how your stats, mood and wellbeing evolve — see your growth, not guess it.",
+      "Monthly charts show how your stats evolve — see your growth, not guess it.",
   },
   {
     icon: UserRound,
     title: "Your Avatar",
     description:
-      "Design a character that represents you, and watch it stand taller as you level up in real life.",
+      "A character that represents you, with a level and XP that grow as you do in real life.",
   },
 ];
 
@@ -66,7 +67,7 @@ const steps = [
     icon: UserRound,
     title: "Create your character",
     description:
-      "Name your avatar, design its look, and start with a fresh level-1 character — just like the beginning of every great RPG.",
+      "Sign up and start with a fresh character and six core stats — just like the beginning of every great RPG.",
   },
   {
     icon: Sparkles,
@@ -110,7 +111,7 @@ export default function HomePage() {
         <div className="landing-nav__inner">
           <Link className="landing-brand" href="/" aria-label="LifeStats home">
             <span className="landing-brand__mark" aria-hidden="true">
-              <Sparkles size={17} />
+              <BrandMark />
             </span>
             <span>LifeStats</span>
           </Link>
@@ -161,7 +162,7 @@ export default function HomePage() {
                 <dd>Core stats</dd>
               </div>
               <div>
-                <dt>24</dt>
+                <dt>38</dt>
                 <dd>Substats tracked</dd>
               </div>
               <div>
@@ -294,7 +295,7 @@ export default function HomePage() {
           <div className="landing-footer__bottom">
             <Link className="landing-brand" href="/">
               <span className="landing-brand__mark" aria-hidden="true">
-                <Sparkles size={15} />
+                <BrandMark />
               </span>
               <span>LifeStats</span>
             </Link>
