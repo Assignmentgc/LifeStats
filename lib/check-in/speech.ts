@@ -47,7 +47,7 @@ export async function prepareLocalRecognition(
   }
   const constructor = getLocalRecognitionConstructor();
   if (!constructor?.available) {
-    throw new Error("This browser does not expose on-device speech recognition. Open LifeStats in an up-to-date desktop browser with local speech support, outside an embedded preview. Microphone permission alone cannot enable this feature.");
+    throw new Error("This browser does not expose on-device speech recognition. Open LifeStats in an up-to-date browser with local speech support, outside an embedded preview. Microphone permission alone cannot enable this feature.");
   }
   const options = { langs: [lang], processLocally: true as const };
   const availability = await constructor.available(options);

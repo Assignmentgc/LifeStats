@@ -1028,26 +1028,6 @@ a {
 
 .check-in-layout { display: grid; gap: 14px; }
 
-.check-in-guide {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  border-color: #343542;
-  background: linear-gradient(145deg, #20212a, #1b1c23);
-}
-
-.check-in-guide__icon {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 10px;
-  background: #352952;
-  color: #ba90f4;
-}
-
-.check-in-guide h2,
 .check-in-result h2,
 .dashboard-check-in h2 {
   margin: 0;
@@ -1058,7 +1038,6 @@ a {
   letter-spacing: -0.02em;
 }
 
-.check-in-guide p,
 .check-in-result__quiet,
 .dashboard-check-in p:not(.eyebrow) {
   margin: 5px 0 0;
@@ -1068,8 +1047,92 @@ a {
 }
 
 .check-in-form {
-  padding: 4px 0 0;
+  display: grid;
+  gap: 12px;
 }
+
+.check-in-followup {
+  padding: 12px 14px;
+  border: 1px solid var(--panel-line);
+  border-left: 3px solid #a77bea;
+  border-radius: var(--radius-md);
+  background: var(--panel);
+}
+
+.check-in-followup .eyebrow { margin: 0 0 4px; }
+.check-in-followup p:not(.eyebrow) { margin: 0; color: var(--text); font-size: 15px; font-weight: 550; }
+
+.check-in-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.check-in-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted-strong);
+  font-size: 12px;
+}
+
+.check-in-count { color: var(--muted); font-size: 11px; }
+
+.check-in-voice-status:empty { display: none; }
+
+.check-in-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.check-in-actions .button--primary { min-width: 150px; }
+
+.check-in-points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.check-in-points li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 11px;
+  border: 1px solid var(--panel-line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--text-soft);
+  font-size: 13px;
+}
+
+.check-in-points strong { color: var(--vitality); font-size: 14px; }
+
+.check-in-tip { margin: 0; color: var(--text-soft); font-size: 13px; line-height: 1.6; }
+
+.check-in-result__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+
+.check-in-details summary {
+  color: var(--muted-strong);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.check-in-details[open] summary { margin-bottom: 8px; }
+.check-in-details ol,
+.check-in-evidence { margin: 8px 0; padding-left: 18px; color: var(--muted-strong); font-size: 12px; line-height: 1.6; }
 
 .check-in-voice-controls {
   display: flex;
@@ -1082,7 +1145,7 @@ a {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 0;
   color: var(--muted-strong);
   font-size: 12px;
 }
@@ -2662,3 +2725,23 @@ body {
   min-height: 100vh;
   background: var(--ink);
 }
+
+.check-in-turn { display: grid; gap: 10px; scroll-margin-top: 12px; }
+.check-in-turn:focus { outline: none; }
+
+.check-in-bubble {
+  justify-self: end;
+  max-width: 92%;
+  padding: 10px 14px;
+  border: 1px solid var(--panel-line);
+  border-radius: 14px 14px 4px 14px;
+  background: var(--panel-raised);
+  color: var(--text);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.check-in-bubble .eyebrow { margin: 0 0 3px; }
+.check-in-bubble p:not(.eyebrow) { margin: 0; font-size: 14px; }
+.check-in-result--earlier { gap: 8px; }
+.check-in-turn__ack { margin: 0; color: var(--text); font-size: 14px; font-weight: 600; line-height: 1.5; }

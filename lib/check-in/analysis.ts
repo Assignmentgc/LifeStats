@@ -32,6 +32,7 @@ export type SessionIndicator = {
   pending_change: number;
   evidence_count: number;
 };
+export type CheckInTurn = { id: string; content: string; analysis: Analysis; created_at?: string };
 export type CheckInResult = {
   entry_id: string;
   local_day: string;
@@ -195,7 +196,7 @@ export function parseCheckInRequest(value: unknown) {
   }
   if (value.locale !== CHECK_IN_LOCALE) throw new CheckInError("Only US English is supported for now.", 400, "unsupported_locale");
   if (value.consent_version !== "perplexity-text-v1") {
-    throw new CheckInError("Please agree to text analysis by Perplexity before submitting.", 400, "consent_required");
+    throw new CheckInError("Please agree to AI text analysis before submitting.", 400, "consent_required");
   }
   if (typeof value.timezone !== "string" || value.timezone.length > 80) throw new CheckInError("Select a valid device timezone.", 400, "invalid_timezone");
   try {
