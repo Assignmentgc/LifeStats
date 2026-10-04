@@ -12,6 +12,7 @@ const analysisModule = await compiled("analysis");
 const providerModule = await compiled("perplexity");
 const credentials = (await import(pathToFileURL(path.join(process.env.CHECK_IN_BUILD_DIR, "lib/supabase/credentials.js")))).default;
 const constants = (await import(pathToFileURL(path.join(process.env.CHECK_IN_BUILD_DIR, "lib/constants.js")))).default;
+const userName = (await import(pathToFileURL(path.join(process.env.CHECK_IN_BUILD_DIR, "lib/user-name.js")))).default;
 const routeCode = ts.transpileModule(readFileSync(new URL("../app/api/check-in/route.ts", import.meta.url), "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
@@ -40,7 +41,7 @@ function loadRoute(options = {}) {
     return { data: [], error: null };
   };
   const supabase = {
-    auth: { getUser: async () => ({ data: { user: options.unauthenticated ? null : { id: user } }, error: null }) },
+    auth: { getUser: async () => ({ data: { user: options.unauthenticated ? null : { id: user, user_metadata: { first_name: "Ada", last_name: "Lovelace" } } }, error: null }) },
     from(table) {
       const query = {
         select() { return query; },
@@ -77,6 +78,7 @@ function loadRoute(options = {}) {
     "@/lib/supabase/server": { createClient: async () => supabase },
     "@/lib/supabase/admin": { createAdminClient: () => admin },
     "@/lib/supabase/credentials": credentials,
+    "@/lib/user-name": userName,
   };
   const exports = {};
   vm.runInNewContext(routeCode, {
@@ -105,6 +107,7 @@ test("route authenticates, validates, calls Perplexity and persists only validat
   assert.equal(calls.rpc[0].args.p_content, content);
   assert.deepEqual(calls.rpc[0].args.p_analysis, analysis());
   assert.equal(calls.provider[0][1].prior_entries.length, 0);
+  assert.equal(calls.provider[0][1].user_full_name, "Ada Lovelace");
 });
 
 test("route rejects unauthorized, unconfigured, unsupported and nonconsenting submissions before provider calls", async () => {

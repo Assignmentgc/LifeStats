@@ -88,6 +88,24 @@ test("category points sum actual lifetime gains without a cap or changing LifeSc
   }
 });
 
+test("category trend accumulates one stat's applied points per local day over a rolling window", () => {
+  const scores = [
+    { local_day: "2026-08-01", substat_id: "fitness", applied_change: 4 },
+    { local_day: "2026-10-01", substat_id: "fitness", applied_change: 2 },
+    { local_day: "2026-10-01", substat_id: "sleep", applied_change: 1.5 },
+    { local_day: "2026-10-03", substat_id: "fitness", applied_change: 3 },
+    { local_day: "2026-10-03", substat_id: "friends", applied_change: 5 },
+    { local_day: "2026-10-04", substat_id: "fitness", applied_change: 9 },
+  ];
+  const trend = scoring.buildCheckInTrend(scores, "vitality", "2026-10-03", 5);
+  assert.deepEqual(Array.from(trend.points, (point) => point.day), ["2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-03"]);
+  assert.deepEqual(Array.from(trend.points, (point) => point.value), [4, 4, 7.5, 7.5, 10.5]);
+  assert.equal(trend.gained, 6.5);
+  assert.equal(trend.total, 10.5);
+  assert.equal(scoring.buildCheckInTrend([], "social", "2026-10-03", 30).gained, 0);
+  assert.throws(() => scoring.buildCheckInTrend([{ local_day: "2026-10-03", substat_id: "fitness", applied_change: -1 }], "vitality", "2026-10-03"), /Invalid saved/);
+});
+
 test("both Character Stat surfaces use cumulative points and only the latest entry's impact", async () => {
   const substats = constants.SUBSTAT_IDS.map((substat_id) => ({ substat_id, value: substat_id === "fitness" ? 2 : 0 }));
   let latest = { category_gains: Object.fromEntries(constants.STAT_NAMES.map((stat) => [stat, stat === "vitality" ? 2 : 0])) };

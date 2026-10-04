@@ -10,7 +10,7 @@ try {
     fileURLToPath(import.meta.resolve("typescript/bin/tsc")), "--outDir", build, "--rootDir", ".",
     "--module", "commonjs", "--moduleResolution", "node", "--target", "ES2022",
     "--esModuleInterop", "--skipLibCheck", "--strict",
-    "lib/check-in/analysis.ts", "lib/check-in/perplexity.ts", "lib/check-in/speech.ts", "lib/supabase/credentials.ts",
+    "lib/check-in/analysis.ts", "lib/check-in/perplexity.ts", "lib/check-in/speech.ts", "lib/supabase/credentials.ts", "lib/user-name.ts",
   ], { stdio: "inherit" });
   if (compile.status !== 0) process.exitCode = compile.status ?? 1;
   else {

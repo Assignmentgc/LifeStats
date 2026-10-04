@@ -2,7 +2,7 @@ import { DEFAULT_LIFESTATS_SETTINGS, STAT_NAMES, type LifeStatsSettings, type St
 import { getPlayerProgress } from "@/lib/level";
 import { createClient } from "@/lib/supabase/server";
 import type { Habit, JournalEntry, Quest, Stat, Substat, Todo } from "@/lib/types";
-import { cumulativeCheckInPoints, calculateLifeScore, parseCheckInCategoryGains } from "@/lib/scoring";
+import { buildCheckInTrend, cumulativeCheckInPoints, calculateLifeScore, parseCheckInCategoryGains } from "@/lib/scoring";
 
 export type ChartPoint = { label: string; value: number };
 type StatProgressEvent = {
@@ -87,6 +87,22 @@ async function getLifeStatsSettings(supabase: Awaited<ReturnType<typeof createCl
   const { data, error } = await supabase.from("lifestats_settings").select("spirituality_enabled, include_spirituality_in_life_score").maybeSingle();
   if (error) throw new Error(error.message);
   return { spiritualityEnabled: data?.spirituality_enabled ?? DEFAULT_LIFESTATS_SETTINGS.spiritualityEnabled, includeSpiritualityInLifeScore: data?.include_spirituality_in_life_score ?? DEFAULT_LIFESTATS_SETTINGS.includeSpiritualityInLifeScore } satisfies LifeStatsSettings;
+}
+
+export async function getCategoryTrend(stat: StatName) {
+  const { supabase } = await getAuthenticatedClient();
+  const { data: settings, error: settingsError } = await supabase.from("lifestats_settings").select("check_in_timezone").maybeSingle();
+  if (settingsError) throw new Error(`Could not load check-in timezone: ${settingsError.message}`);
+  const scores: { local_day: string; substat_id: string; applied_change: number }[] = [];
+  for (let offset = 0; ; offset += 500) {
+    const { data, error } = await supabase.from("check_in_daily_scores").select("local_day, substat_id, applied_change")
+      .order("local_day").order("substat_id").range(offset, offset + 499);
+    if (error) throw new Error(`Could not load check-in trend: ${error.message}`);
+    scores.push(...(data ?? []));
+    if (!data || data.length < 500) break;
+  }
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: settings?.check_in_timezone ?? "UTC", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  return buildCheckInTrend(scores, stat, today);
 }
 
 export async function getCurrentLifeStatsSettings() {

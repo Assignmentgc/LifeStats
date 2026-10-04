@@ -125,6 +125,12 @@ test("Perplexity request uses no tools, no storage, structured JSON and compact 
   assert.equal(request.model, "test/model");
   assert.match(request.instructions, /negated/);
   assert.match(request.instructions, /not personal worth/);
+  assert.match(request.instructions, /adds up every proposed_gain/);
+  assert.doesNotMatch(request.instructions, /usually 1/);
+  assert.match(request.instructions, /Default follow_up_question to null/);
+  assert.match(request.instructions, /user_full_name/);
+  assert.equal(buildCompactContext({ ...context, user_full_name: "Ada Lovelace" }).user_full_name, "Ada Lovelace");
+  assert.match(request.instructions, /never repeat or rephrase a question already in prior_entries/);
   assert.equal(JSON.parse(request.input).final_entry, content);
   const compact = buildCompactContext({
     ...context, prior_entries: Array.from({ length: 20 }, () => ({ acknowledgement: "x".repeat(1000), follow_up_question: null })),

@@ -9,14 +9,11 @@ import {
 import { STAT_NAMES } from "@/lib/constants";
 import { getDashboardData } from "@/lib/data";
 import { formatNumber } from "@/lib/utils";
+import { getDisplayName } from "@/lib/user-name";
 
 export default async function DashboardPage() {
   const { user, checkInPoints, latestCheckInGains, progress, todos, lifeScore } = await getDashboardData();
-  const displayName = (user.email?.split("@")[0] || "Adventurer")
-    .split(/[._-]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+  const displayName = getDisplayName(user);
 
   return (
     <main className="page-container dashboard-page">

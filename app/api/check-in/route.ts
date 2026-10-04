@@ -5,6 +5,7 @@ import { analyzeWithPerplexity, type CompactContext } from "@/lib/check-in/perpl
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isPrivilegedSupabaseKey } from "@/lib/supabase/credentials";
 import { createClient } from "@/lib/supabase/server";
+import { getFullName } from "@/lib/user-name";
 
 export const runtime = "nodejs";
 
@@ -83,6 +84,7 @@ export async function POST(request: Request) {
     const spiritualityEnabled = settingsResult.data?.spirituality_enabled ?? DEFAULT_LIFESTATS_SETTINGS.spiritualityEnabled;
     const completedQuests = (questsResult.data ?? []).filter((quest) => typeof quest.completed_at === "string" && dayInTimezone(new Date(quest.completed_at), input.timezone) === localDay);
     const context: CompactContext = {
+      user_full_name: getFullName(user),
       spirituality_enabled: spiritualityEnabled,
       prior_entries: (entriesResult.data ?? []).flatMap(({ analysis }) => isRecord(analysis) && typeof analysis.acknowledgement === "string" ? [{
         acknowledgement: analysis.acknowledgement,
