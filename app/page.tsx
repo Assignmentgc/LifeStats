@@ -303,6 +303,7 @@ export default function HomePage() {
             <div>
               <Link href="/login">Log in</Link>
               <Link href="/sign-up">Sign up</Link>
+              <Link href="/privacy">Privacy</Link>
             </div>
           </div>
         </div>
