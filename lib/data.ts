@@ -61,7 +61,7 @@ async function getAuthenticatedClient() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) throw new Error("You must be signed in to view LifeStats.");
+  if (!user?.email_confirmed_at) throw new Error("You must sign in with a verified email to view LifeStats.");
   return { supabase, user };
 }
 

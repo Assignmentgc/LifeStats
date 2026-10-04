@@ -15,7 +15,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (user) redirect("/dashboard");
+  if (user?.email_confirmed_at) redirect("/dashboard");
 
   const { message } = await searchParams;
   return (

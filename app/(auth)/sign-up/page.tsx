@@ -11,7 +11,7 @@ export default async function SignUpPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (user) redirect("/dashboard");
+  if (user?.email_confirmed_at) redirect("/dashboard");
 
   return (
     <main className="auth-shell">
