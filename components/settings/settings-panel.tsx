@@ -1,11 +1,12 @@
 "use client";
 
-import { MonitorCog, Moon, Sparkles, Sun } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
-import { updateLifeStatsSettings } from "@/app/actions/settings";
+import { MonitorCog, Moon, Sparkles, Sun, UserRound } from "lucide-react";
+import { useEffect, useState, useTransition, type FormEvent } from "react";
+import { updateLifeStatsSettings, updateProfileName } from "@/app/actions/settings";
 import { SignOutButton } from "@/components/auth/sign-out-button";
-import { Panel } from "@/components/ui";
+import { Button, Panel } from "@/components/ui";
 import type { LifeStatsSettings } from "@/lib/constants";
+import { MAX_NAME_LENGTH } from "@/lib/user-name";
 
 type Theme = "dark" | "light";
 
@@ -14,11 +15,24 @@ function applyTheme(theme: Theme) {
   localStorage.setItem("lifestats-theme", theme);
 }
 
-export function SettingsPanel({ settings: initialSettings }: { settings: LifeStatsSettings }) {
+export function SettingsPanel({ settings: initialSettings, names }: { settings: LifeStatsSettings; names: { firstName: string; lastName: string } }) {
   const [theme, setTheme] = useState<Theme>("dark");
   const [settings, setSettings] = useState(initialSettings);
   const [isSaving, startTransition] = useTransition();
   const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState(names.firstName);
+  const [lastName, setLastName] = useState(names.lastName);
+  const [isSavingName, startNameTransition] = useTransition();
+  const [nameMessage, setNameMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
+
+  function saveName(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setNameMessage(null);
+    startNameTransition(async () => {
+      const result = await updateProfileName(firstName, lastName);
+      setNameMessage(result.error ? { type: "error", text: result.error } : { type: "success", text: "Name saved." });
+    });
+  }
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("lifestats-theme");
@@ -39,6 +53,15 @@ export function SettingsPanel({ settings: initialSettings }: { settings: LifeSta
   }
 
   return <div className="settings-list">
+    <Panel className="settings-card">
+      <div className="settings-card__heading"><UserRound aria-hidden="true" size={19} /><div><h2>Profile</h2><p>Your name is used to address you across LifeStats.</p></div></div>
+      <form className="auth-form" onSubmit={saveName}>
+        <label className="field"><span className="field__label">First name</span><input autoComplete="given-name" className="input" maxLength={MAX_NAME_LENGTH} onChange={(event) => setFirstName(event.target.value)} required type="text" value={firstName} /></label>
+        <label className="field"><span className="field__label">Last name</span><input autoComplete="family-name" className="input" maxLength={MAX_NAME_LENGTH} onChange={(event) => setLastName(event.target.value)} required type="text" value={lastName} /></label>
+        {nameMessage ? <p className={`form-message form-message--${nameMessage.type}`}>{nameMessage.text}</p> : null}
+        <Button loading={isSavingName} loadingText="Saving…" type="submit" variant="primary">Save name</Button>
+      </form>
+    </Panel>
     <Panel className="settings-card">
       <div className="settings-card__heading"><MonitorCog aria-hidden="true" size={19} /><div><h2>Appearance</h2><p>Choose the color mode that feels best to you.</p></div></div>
       <div className="appearance-options" role="group" aria-label="Appearance mode">

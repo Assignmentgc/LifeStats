@@ -4,10 +4,11 @@ import { BrandMark } from "@/components/brand-mark";
 
 type AppShellProps = {
   email: string;
+  name?: string | null;
   children: React.ReactNode;
 };
 
-export function AppShell({ email, children }: AppShellProps) {
+export function AppShell({ email, name, children }: AppShellProps) {
   return (
     <div className="app-shell">
       <header className="app-topbar">
@@ -18,7 +19,7 @@ export function AppShell({ email, children }: AppShellProps) {
           <span>LifeStats</span>
         </Link>
         <div className="account-menu">
-          <span className="account-email" title={email}>{email}</span>
+          <span className="account-email" title={email}>{name || email}</span>
         </div>
       </header>
       {children}

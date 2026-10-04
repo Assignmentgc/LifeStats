@@ -4,12 +4,15 @@ import { useState, type FormEvent } from "react";
 import { RouteLoader } from "@/components/route-loader";
 import { Button } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
+import { cleanName, MAX_NAME_LENGTH } from "@/lib/user-name";
 
 type AuthFormProps = {
   mode: "login" | "signup";
 };
 
 export function AuthForm({ mode }: AuthFormProps) {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +34,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           email,
           password,
           options: {
+            data: { first_name: cleanName(firstName), last_name: cleanName(lastName) },
             emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
           },
         });
@@ -65,6 +69,36 @@ export function AuthForm({ mode }: AuthFormProps) {
     <>
     {isEntering ? <RouteLoader overlay message="Entering your space..." /> : null}
     <form className="auth-form" onSubmit={onSubmit}>
+      {isSignUp ? (
+        <>
+          <label className="field">
+            <span className="field__label">First name</span>
+            <input
+              className="input"
+              type="text"
+              autoComplete="given-name"
+              value={firstName}
+              onChange={(event) => setFirstName(event.target.value)}
+              maxLength={MAX_NAME_LENGTH}
+              placeholder="First name"
+              required
+            />
+          </label>
+          <label className="field">
+            <span className="field__label">Last name</span>
+            <input
+              className="input"
+              type="text"
+              autoComplete="family-name"
+              value={lastName}
+              onChange={(event) => setLastName(event.target.value)}
+              maxLength={MAX_NAME_LENGTH}
+              placeholder="Last name"
+              required
+            />
+          </label>
+        </>
+      ) : null}
       <label className="field">
         <span className="field__label">Email</span>
         <input

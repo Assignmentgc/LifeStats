@@ -2,6 +2,9 @@
 
 Next.js and Supabase life-stat tracking with US-English text and on-device voice check-ins.
 
+The website is installable as a PWA, and [`android/`](./android/README.md) packages
+it as an Android app (Trusted Web Activity) that loads the live site.
+
 ## Check-in setup
 
 1. Install dependencies with `npm install`.
