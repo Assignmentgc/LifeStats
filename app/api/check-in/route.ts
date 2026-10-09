@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { DEFAULT_LIFESTATS_SETTINGS } from "@/lib/constants";
-import { CheckInError, dayInTimezone, isRecord, isUuid, parseCheckInRequest, validateAnalysis } from "@/lib/check-in/analysis";
+import { CheckInError, dayInTimezone, isRecord, isUuid, MAX_LIFESTATS_FOLLOW_UP_QUESTIONS, parseCheckInRequest, validateAnalysis } from "@/lib/check-in/analysis";
 import { analyzeWithPerplexity, type CompactContext } from "@/lib/check-in/perplexity";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isPrivilegedSupabaseKey } from "@/lib/supabase/credentials";
@@ -83,10 +83,16 @@ export async function POST(request: Request) {
     const localDay = dayInTimezone(receivedAt, input.timezone);
     const spiritualityEnabled = settingsResult.data?.spirituality_enabled ?? DEFAULT_LIFESTATS_SETTINGS.spiritualityEnabled;
     const completedQuests = (questsResult.data ?? []).filter((quest) => typeof quest.completed_at === "string" && dayInTimezone(new Date(quest.completed_at), input.timezone) === localDay);
+    const priorAnalyses = (entriesResult.data ?? []).flatMap(({ analysis }) => isRecord(analysis) ? [analysis] : []);
+    const followUpQuestionsAsked = priorAnalyses.filter((analysis) =>
+      analysis.language_status === "english" && typeof analysis.follow_up_question === "string"
+    ).length;
+    const followUpQuestionsRemaining = Math.max(0, MAX_LIFESTATS_FOLLOW_UP_QUESTIONS - followUpQuestionsAsked);
     const context: CompactContext = {
       user_full_name: getFullName(user),
       spirituality_enabled: spiritualityEnabled,
-      prior_entries: (entriesResult.data ?? []).flatMap(({ analysis }) => isRecord(analysis) && typeof analysis.acknowledgement === "string" ? [{
+      follow_up_questions_remaining: followUpQuestionsRemaining,
+      prior_entries: priorAnalyses.flatMap((analysis) => typeof analysis.acknowledgement === "string" ? [{
         acknowledgement: analysis.acknowledgement,
         follow_up_question: typeof analysis.follow_up_question === "string" ? analysis.follow_up_question : null,
       }] : []),
@@ -95,7 +101,10 @@ export async function POST(request: Request) {
     };
     const model = process.env.PERPLEXITY_MODEL || "google/gemini-3.1-flash-lite";
     const rawAnalysis = await analyzeWithPerplexity(input.content, context, apiKey, model);
-    const analysis = validateAnalysis(rawAnalysis, input.content, spiritualityEnabled, new Set(completedQuests.map((quest) => quest.id)));
+    const validatedAnalysis = validateAnalysis(rawAnalysis, input.content, spiritualityEnabled, new Set(completedQuests.map((quest) => quest.id)));
+    const analysis = followUpQuestionsRemaining === 0 && validatedAnalysis.language_status === "english"
+      ? { ...validatedAnalysis, follow_up_question: null }
+      : validatedAnalysis;
     const { data, error } = await admin.rpc("save_check_in_evidence", {
       p_user_id: user.id,
       p_session_id: input.sessionId,

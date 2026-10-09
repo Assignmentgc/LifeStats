@@ -3,6 +3,7 @@ import { SUBSTAT_IDS, type SubstatId } from "../constants";
 export const CHECK_IN_LOCALE = "en-US";
 export const MIN_EVIDENCE_CONFIDENCE = 0.8;
 export const MAX_EVIDENCE_ITEMS = 12;
+export const MAX_LIFESTATS_FOLLOW_UP_QUESTIONS = 3;
 export const SAFETY_FLAGS = ["self_harm", "immediate_danger", "unsafe_behavior", "medical_advice"] as const;
 export type SafetyFlag = (typeof SAFETY_FLAGS)[number];
 export type Evidence = {

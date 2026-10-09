@@ -16,7 +16,7 @@ const analysis = () => ({
   schema_version: "2", language_status: "english", normalized_english: content, evidence: [{ ...evidence }],
   acknowledgement: "You made time for movement.", practical_tip: null, follow_up_question: null, confidence: 0.9, safety_flags: [],
 });
-const context = { spirituality_enabled: false, prior_entries: [], today_evidence: [], completed_quests: [] };
+const context = { spirituality_enabled: false, follow_up_questions_remaining: 3, prior_entries: [], today_evidence: [], completed_quests: [] };
 const envelope = (text) => ({
   status: "completed", error: null, incomplete_details: null,
   output: [{ type: "reasoning" }, { type: "message", role: "assistant", content: [{ type: "output_text", text }] }],
@@ -127,11 +127,14 @@ test("Perplexity request uses no tools, no storage, structured JSON and compact 
   assert.match(request.instructions, /not personal worth/);
   assert.match(request.instructions, /adds up every proposed_gain/);
   assert.doesNotMatch(request.instructions, /usually 1/);
-  assert.match(request.instructions, /for each clear, non-safety-sensitive check-in/);
+  assert.match(request.instructions, /at most 3 LifeStats-oriented follow-up questions/);
+  assert.match(request.instructions, /follow_up_questions_remaining is greater than 0/);
   assert.match(request.instructions, /it need not change scoring/);
   assert.doesNotMatch(request.instructions, /ONLY when the answer would change/);
   assert.match(request.instructions, /user_full_name/);
   assert.equal(buildCompactContext({ ...context, user_full_name: "Ada Lovelace" }).user_full_name, "Ada Lovelace");
+  assert.equal(buildCompactContext({ ...context, follow_up_questions_remaining: 99 }).follow_up_questions_remaining, 3);
+  assert.equal(buildCompactContext({ ...context, follow_up_questions_remaining: -1 }).follow_up_questions_remaining, 0);
   assert.match(request.instructions, /Do not repeat or rephrase a question already in prior_entries/);
   assert.equal(JSON.parse(request.input).final_entry, content);
   const compact = buildCompactContext({

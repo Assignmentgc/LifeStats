@@ -72,7 +72,7 @@ function loadRoute(options = {}) {
       ...providerModule,
       analyzeWithPerplexity: async (...args) => {
         calls.provider.push(args);
-        return options.invalidAnalysis ? { bad: true } : analysis();
+        return options.invalidAnalysis ? { bad: true } : options.providerAnalysis ?? analysis();
       },
     },
     "@/lib/supabase/server": { createClient: async () => supabase },
@@ -107,6 +107,7 @@ test("route authenticates, validates, calls Perplexity and persists only validat
   assert.equal(calls.rpc[0].args.p_content, content);
   assert.deepEqual(calls.rpc[0].args.p_analysis, analysis());
   assert.equal(calls.provider[0][1].prior_entries.length, 0);
+  assert.equal(calls.provider[0][1].follow_up_questions_remaining, 3);
   assert.equal(calls.provider[0][1].user_full_name, "Ada Lovelace");
 });
 
@@ -136,9 +137,31 @@ test("follow-up replies keep the session and provide the prior question as conte
   assert.equal(calls.provider[0][1].prior_entries.length, 1);
   assert.equal(calls.provider[0][1].prior_entries[0].acknowledgement, previous.acknowledgement);
   assert.equal(calls.provider[0][1].prior_entries[0].follow_up_question, previous.follow_up_question);
+  assert.equal(calls.provider[0][1].follow_up_questions_remaining, 2);
   assert.equal(calls.rpc[0].args.p_session_id, body.session_id);
   assert.equal(calls.rpc[0].args.p_request_id, body.request_id);
   assert.equal(calls.rpc[0].args.p_content, body.content);
+});
+
+test("route persists at most three LifeStats follow-up questions per session", async () => {
+  const providerAnalysis = { ...analysis(), follow_up_question: "Would another reflection help?" };
+  const twoPriorEntries = Array.from({ length: 2 }, (_, index) => ({
+    analysis: { ...analysis(), follow_up_question: `LifeStats question ${index + 1}?` },
+  }));
+  const allowed = loadRoute({ priorEntries: twoPriorEntries, providerAnalysis });
+
+  assert.equal((await allowed.route.POST(request(input()))).status, 200);
+  assert.equal(allowed.calls.provider[0][1].follow_up_questions_remaining, 1);
+  assert.equal(allowed.calls.rpc[0].args.p_analysis.follow_up_question, providerAnalysis.follow_up_question);
+
+  const priorEntries = Array.from({ length: 3 }, (_, index) => ({
+    analysis: { ...analysis(), follow_up_question: `LifeStats question ${index + 1}?` },
+  }));
+  const capped = loadRoute({ priorEntries, providerAnalysis });
+
+  assert.equal((await capped.route.POST(request(input()))).status, 200);
+  assert.equal(capped.calls.provider[0][1].follow_up_questions_remaining, 0);
+  assert.equal(capped.calls.rpc[0].args.p_analysis.follow_up_question, null);
 });
 
 test("retrying a saved entry avoids another provider call; changed content returns conflict", async () => {

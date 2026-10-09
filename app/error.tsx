@@ -21,7 +21,8 @@ export default function GlobalError({
         <BrandMark className="status-mark" />
         <p className="eyebrow">Unexpected encounter</p>
         <h1>LifeStats hit a snag.</h1>
-        <p>Check that the Supabase migration and environment variables are configured, then try again.</p>
+        <p>We couldn&apos;t load this page. Please try again. If the problem continues, share the reference below with support.</p>
+        {error.digest ? <p className="error-reference">Reference: <code>{error.digest}</code></p> : null}
         <Button variant="primary" onClick={reset}>Try again</Button>
       </Panel>
     </main>
