@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     if (sessionId !== null && !isUuid(sessionId)) return NextResponse.json({ error: "Invalid check-in session." }, { status: 400 });
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) return NextResponse.json({ error: "Please sign in to view check-ins." }, { status: 401 });
+    if (authError || !user?.email_confirmed_at) return NextResponse.json({ error: "Please sign in with a verified email to view check-ins." }, { status: 401 });
     let query = supabase.from("ai_check_ins").select("id, session_id").eq("user_id", user.id).not("session_id", "is", null);
     if (sessionId) query = query.eq("session_id", sessionId);
     const { data: entry, error } = await query.order("created_at", { ascending: false }).limit(1).maybeSingle();
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     const input = parseCheckInRequest(body);
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) throw new CheckInError("Please sign in to submit a check-in.", 401, "unauthenticated");
+    if (authError || !user?.email_confirmed_at) throw new CheckInError("Please sign in with a verified email to submit a check-in.", 401, "unauthenticated");
     if (!isPrivilegedSupabaseKey(process.env.SUPABASE_SERVICE_ROLE_KEY)) {
       throw new CheckInError("Check-in storage requires a server-only Supabase secret key or service_role key. The publishable browser key cannot save entries; ask the administrator to update SUPABASE_SERVICE_ROLE_KEY.", 503, "invalid_server_credential");
     }

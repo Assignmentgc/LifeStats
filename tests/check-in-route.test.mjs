@@ -41,7 +41,7 @@ function loadRoute(options = {}) {
     return { data: [], error: null };
   };
   const supabase = {
-    auth: { getUser: async () => ({ data: { user: options.unauthenticated ? null : { id: user, user_metadata: { first_name: "Ada", last_name: "Lovelace" } } }, error: null }) },
+    auth: { getUser: async () => ({ data: { user: options.unauthenticated ? null : { id: user, email_confirmed_at: options.unverified ? null : "2026-10-04T00:00:00Z", user_metadata: { first_name: "Ada", last_name: "Lovelace" } } }, error: null }) },
     from(table) {
       const query = {
         select() { return query; },
@@ -113,6 +113,7 @@ test("route authenticates, validates, calls Perplexity and persists only validat
 test("route rejects unauthorized, unconfigured, unsupported and nonconsenting submissions before provider calls", async () => {
   for (const [options, changes, status] of [
     [{ unauthenticated: true }, {}, 401],
+    [{ unverified: true }, {}, 401],
     [{ env: { PERPLEXITY_CHECK_INS_ENABLED: "false" } }, {}, 503],
     [{ env: { SUPABASE_SERVICE_ROLE_KEY: "sb_publishable_synthetic-test" } }, {}, 503],
     [{}, { locale: "es-US" }, 400],
@@ -198,6 +199,7 @@ test("history validates explicit sessions and reports empty, unauthorized, or fa
     [{}, "", 200],
     [{}, "?session_id=invalid", 400],
     [{ unauthenticated: true }, "", 401],
+    [{ unverified: true }, "", 401],
     [{ historyError: { code: "XX000" } }, "", 503],
   ]) {
     const { route } = loadRoute(options);

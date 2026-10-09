@@ -22,7 +22,7 @@ test("saved check-ins and manual entries share a newest-first journal without du
   const checkIn = { id: "check-in", user_id: "user", content: "Today I walked.", created_at: "2026-10-03T12:00:00Z" };
   let failing = false;
   const supabase = {
-    auth: { getUser: async () => ({ data: { user: { id: "user" } } }) },
+    auth: { getUser: async () => ({ data: { user: { id: "user", email_confirmed_at: "2026-10-04T00:00:00Z" } } }) },
     from: (table) => {
       queries.push(table);
       return { select: () => ({ order: async () => ({
@@ -48,7 +48,7 @@ test("saved check-ins and manual entries share a newest-first journal without du
 
 test("the post-save Server Action invalidates all persisted check-in views only for authenticated users", async () => {
   const paths = [];
-  let user = { id: "user" };
+  let user = { id: "user", email_confirmed_at: "2026-10-04T00:00:00Z" };
   const actions = load("../app/actions/check-in.ts", {
     "next/cache": { revalidatePath: (path) => paths.push(path) },
     "@/lib/supabase/server": { createClient: async () => ({
@@ -57,10 +57,12 @@ test("the post-save Server Action invalidates all persisted check-in views only 
   });
   assert.equal((await actions.refreshCheckInViews()).success, true);
   assert.deepEqual(paths, ["/dashboard", "/stats", "/stats/[category]", "/journal"]);
-  user = null;
   paths.length = 0;
-  assert.match((await actions.refreshCheckInViews()).error, /saved.*session expired/);
-  assert.equal(paths.length, 0);
+  for (const unverified of [{ id: "user", email_confirmed_at: null }, null]) {
+    user = unverified;
+    assert.match((await actions.refreshCheckInViews()).error, /saved.*verified email/);
+    assert.equal(paths.length, 0);
+  }
 });
 
 const constants = load("../lib/constants.ts", {});
@@ -111,7 +113,7 @@ test("both Character Stat surfaces use cumulative points and only the latest ent
   let latest = { category_gains: Object.fromEntries(constants.STAT_NAMES.map((stat) => [stat, stat === "vitality" ? 2 : 0])) };
   let error = null;
   const supabase = {
-    auth: { getUser: async () => ({ data: { user: { id: "user" } } }) },
+    auth: { getUser: async () => ({ data: { user: { id: "user", email_confirmed_at: "2026-10-04T00:00:00Z" } } }) },
     rpc: async () => ({ data: [{ total_xp: 100 }], error: null }),
     from: (table) => {
       const result = () => ({

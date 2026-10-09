@@ -29,7 +29,7 @@ export async function createJournalEntry(
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) throw new Error("Your session has expired. Please sign in again.");
+    if (!user?.email_confirmed_at) throw new Error("Please sign in with a verified email.");
 
     const { error } = await supabase.from("journal_entries").insert({
       user_id: user.id,

@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 export default async function CheckInPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Please sign in to view your check-ins.");
+  if (!user?.email_confirmed_at) throw new Error("Please sign in with a verified email to view your check-ins.");
   return (
     <main className="page-container check-in-page">
       <header className="check-in-page__header">

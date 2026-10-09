@@ -10,7 +10,7 @@ export default async function ProtectedLayout({ children }: Readonly<{ children:
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user?.email_confirmed_at) redirect("/login");
 
   return <AppShell email={user.email ?? "Adventurer"} name={getFullName(user)}>{children}</AppShell>;
 }

@@ -9,7 +9,7 @@ export type TodoFormState = { error?: string; success?: string };
 async function getUserAndClient() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Your session has expired. Please sign in again.");
+  if (!user?.email_confirmed_at) throw new Error("Please sign in with a verified email.");
   return { supabase, user };
 }
 

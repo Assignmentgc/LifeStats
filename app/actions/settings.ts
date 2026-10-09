@@ -11,7 +11,7 @@ export async function updateProfileName(firstNameInput: string, lastNameInput: s
   if (!firstName || !lastName) return { error: "Please enter both your first and last name." };
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "Your session has expired. Please sign in again." };
+  if (!user?.email_confirmed_at) return { error: "Please sign in with a verified email." };
   const { error } = await supabase.auth.updateUser({ data: { first_name: firstName, last_name: lastName } });
   if (error) return { error: error.message };
   revalidatePath("/", "layout");
@@ -21,7 +21,7 @@ export async function updateProfileName(firstNameInput: string, lastNameInput: s
 export async function updateLifeStatsSettings(settings: LifeStatsSettings) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "Your session has expired. Please sign in again." };
+  if (!user?.email_confirmed_at) return { error: "Please sign in with a verified email." };
   const { error } = await supabase.from("lifestats_settings").upsert({
     user_id: user.id,
     spirituality_enabled: Boolean(settings.spiritualityEnabled),
