@@ -186,12 +186,21 @@ test("verification without both a session and a confirmed email fails closed", a
   }
 });
 
-test("signup with confirmation disabled rejects and signs out an immediate session", async () => {
+test("signup with confirmation disabled enters the app with a confirmed session", async () => {
   const h = harness("signup", { signupResult: success() });
+  await h.submit();
+  assert.equal(h.calls.signOut.length, 0);
+  assert.deepEqual(h.calls.navigation, ["/dashboard"]);
+});
+
+test("signup fails closed if Supabase returns an unconfirmed immediate session", async () => {
+  const h = harness("signup", {
+    signupResult: { data: { user: { id: "synthetic-user" }, session }, error: null },
+  });
   await h.submit();
   assert.equal(h.calls.signOut[0].scope, "local");
   assert.equal(h.calls.navigation.length, 0);
-  assert.ok(text(h.render()).includes("Email verification is unavailable"));
+  assert.ok(text(h.render()).includes("session without a confirmed email"));
 });
 
 test("unconfirmed password login recovers the verification screen after reload", async () => {

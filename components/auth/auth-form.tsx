@@ -70,8 +70,12 @@ export function AuthForm({ mode }: AuthFormProps) {
         if (signUpError) throw signUpError;
 
         if (data.session) {
-          await supabase.auth.signOut({ scope: "local" });
-          throw new Error("Email verification is unavailable. Please contact support before signing in.");
+          if (!data.user?.email_confirmed_at) {
+            await supabase.auth.signOut({ scope: "local" });
+            throw new Error("Supabase returned a session without a confirmed email.");
+          }
+          enterApp();
+          return;
         }
         setVerificationEmail(email.trim());
         setPassword("");
