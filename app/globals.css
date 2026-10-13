@@ -1335,6 +1335,25 @@ a {
 }
 
 /* Habits */
+.habit-dialog {
+  width: min(calc(100% - 32px), 580px);
+  padding: 0;
+  border: 1px solid var(--panel-line-strong);
+  border-radius: 18px;
+  background: var(--panel-raised);
+  color: var(--text);
+  box-shadow: 0 24px 70px rgb(0 0 0 / 0.48);
+}
+
+.habit-dialog::backdrop { background: rgb(4 8 18 / 0.72); }
+.habit-dialog__form { display: grid; gap: 18px; padding: 25px; }
+.habit-dialog__heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
+.habit-dialog__heading h2 { margin: 5px 0 7px; font-family: var(--font-heading); font-size: 26px; }
+.habit-dialog__heading p:not(.eyebrow) { margin: 0; color: var(--muted); }
+.habit-dialog__actions { display: flex; justify-content: end; gap: 10px; }
+.habit-dialog__xp { margin: -4px 0 0; color: var(--muted); font-size: 12px; }
+.habit-dialog__xp strong { color: var(--text-soft); }
+
 .habit-card { display: grid; gap: 17px; }
 
 .habit-card__topline,
@@ -1361,6 +1380,7 @@ a {
 .habit-card p,
 .habit-card__footer > span { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
 .habit-card__footer > span { margin: 0; }
+.habit-card__actions { display: flex; align-items: center; gap: 8px; }
 
 .streak-count {
   display: grid;
@@ -1397,6 +1417,8 @@ a {
   .habit-card__topline,
   .habit-card__footer { align-items: start; flex-direction: column; }
   .habit-card__footer .button { width: 100%; }
+  .habit-card__actions { width: 100%; flex-direction: column-reverse; }
+  .habit-dialog__actions .button { width: auto; }
   .form-heading { align-items: start; flex-direction: column; }
   .form-heading__hint { max-width: none; text-align: left; }
 }

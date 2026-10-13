@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, Flame } from "lucide-react";
-import { completeQuest } from "@/app/actions/quests";
+import { Check, Flame, Trash2 } from "lucide-react";
+import { completeQuest, deleteQuest } from "@/app/actions/quests";
 import { Button, EmptyState, Panel, ProgressBar, StatTag } from "@/components/ui";
 import type { Habit } from "@/lib/types";
 
@@ -16,6 +16,16 @@ export function HabitList({ habits }: { habits: Habit[] }) {
     setPendingId(id);
     startTransition(async () => {
       const result = await completeQuest(id);
+      if (!result.success) setError(result.error);
+      setPendingId(null);
+    });
+  }
+
+  function deleteHabit(id: string) {
+    setError(null);
+    setPendingId(id);
+    startTransition(async () => {
+      const result = await deleteQuest(id);
       if (!result.success) setError(result.error);
       setPendingId(null);
     });
@@ -66,15 +76,26 @@ export function HabitList({ habits }: { habits: Habit[] }) {
               ) : (
                 <span>Complete it today to protect your streak.</span>
               )}
-              <Button
-                disabled={habit.completedToday || pending}
-                loading={pending} loadingText="Saving…"
-                onClick={() => completeHabit(habit.id)}
-                size="sm"
-                variant={habit.completedToday ? "ghost" : "primary"}
-              >
-                {habit.completedToday ? "Done" : "Complete"}
-              </Button>
+              <div className="habit-card__actions">
+                <Button
+                  aria-label={`Delete ${habit.title}`}
+                  disabled={pending}
+                  onClick={() => deleteHabit(habit.id)}
+                  size="sm"
+                  variant="danger"
+                >
+                  <Trash2 aria-hidden="true" size={14} /> Delete
+                </Button>
+                <Button
+                  disabled={habit.completedToday || pending}
+                  loading={pending} loadingText="Saving…"
+                  onClick={() => completeHabit(habit.id)}
+                  size="sm"
+                  variant={habit.completedToday ? "ghost" : "primary"}
+                >
+                  {habit.completedToday ? "Done" : "Complete"}
+                </Button>
+              </div>
             </div>
           </Panel>
         );

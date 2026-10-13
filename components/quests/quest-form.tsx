@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { createQuest, type QuestFormState } from "@/app/actions/quests";
 import { Button, Panel } from "@/components/ui";
 import { STAT_NAMES, SUBSTAT_META, getActiveSubstats } from "@/lib/constants";
@@ -10,9 +10,15 @@ const initialState: QuestFormState = {};
 export function QuestForm() {
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, isPending] = useActionState(createQuest, initialState);
+  const [isDaily, setIsDaily] = useState(false);
+  const [xpValue, setXpValue] = useState("10");
 
   useEffect(() => {
-    if (state.success) formRef.current?.reset();
+    if (state.success) {
+      formRef.current?.reset();
+      setIsDaily(false);
+      setXpValue("10");
+    }
   }, [state.success]);
 
   return (
@@ -46,12 +52,22 @@ export function QuestForm() {
           </label>
           <label className="field">
             <span className="field__label">Habit XP / quest effort</span>
-            <input className="input" defaultValue="10" max="100" min="1" name="xp_value" type="number" required />
-            <small>Daily habits earn this XP; check-ins earn XP separately. For one-time quests, this sets stat-reward effort only.</small>
+            <input
+              className="input"
+              disabled={isDaily}
+              max="100"
+              min="1"
+              name="xp_value"
+              onChange={(event) => setXpValue(event.target.value)}
+              required
+              type="number"
+              value={isDaily ? "10" : xpValue}
+            />
+            <small>{isDaily ? "Daily habits always award 10 XP." : "For one-time quests, this sets stat-reward effort."}</small>
           </label>
         </div>
         <label className="daily-toggle">
-          <input name="is_daily" type="checkbox" />
+          <input checked={isDaily} name="is_daily" onChange={(event) => setIsDaily(event.target.checked)} type="checkbox" />
           <span>
             <strong>Repeat daily</strong>
             <small>It resets each new UTC day and earns a habit streak.</small>

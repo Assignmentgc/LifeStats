@@ -1,4 +1,5 @@
 import { HabitList } from "@/components/habits/habit-list";
+import { HabitForm } from "@/components/habits/habit-form";
 import { getHabitData } from "@/lib/data";
 
 export default async function HabitsPage() {
@@ -12,6 +13,7 @@ export default async function HabitsPage() {
           <h1 className="page-title">Keep the chain alive</h1>
           <p className="page-description">Your existing habit streaks remain here while daily progress is now captured through check-ins.</p>
         </div>
+        <HabitForm />
       </header>
       <HabitList habits={habits} />
     </main>

@@ -21,8 +21,8 @@ async function getUserAndClient() {
 function parseQuest(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const substatId = String(formData.get("substat_id") ?? "");
-  const rawXp = Number(formData.get("xp_value") ?? 10);
   const isDaily = formData.get("is_daily") === "on";
+  const rawXp = Number(formData.get("xp_value") ?? 10);
 
   if (!title || title.length > 140) {
     throw new Error("Quest titles must be between 1 and 140 characters.");
@@ -30,12 +30,19 @@ function parseQuest(formData: FormData) {
   if (!SUBSTAT_IDS.includes(substatId as SubstatId)) {
     throw new Error("Choose a valid substat for this quest.");
   }
-  if (!Number.isFinite(rawXp) || rawXp < 1 || rawXp > 100) {
+  if (!isDaily && (!Number.isFinite(rawXp) || rawXp < 1 || rawXp > 100)) {
     throw new Error("XP must be a number from 1 to 100.");
   }
 
   const typedSubstatId = substatId as SubstatId;
-  return { title, tag: SUBSTAT_META[typedSubstatId].baseStat, substat_id: typedSubstatId, xp_value: Math.round(rawXp), is_daily: isDaily };
+  return {
+    title,
+    tag: SUBSTAT_META[typedSubstatId].baseStat,
+    substat_id: typedSubstatId,
+    // Daily habits always award the same amount, regardless of submitted form data.
+    xp_value: isDaily ? 10 : Math.round(rawXp),
+    is_daily: isDaily,
+  };
 }
 
 export async function createQuest(
